@@ -22,13 +22,13 @@
 <div class="container form-page">
 
     <form id="entryForm">
-    <label class="label">Title</label>
+    <label class="label" for="titleInput">Title</label>
     <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required>
 
-    <label class="label">Date</label>
+    <label class="label" for="dateInput">Date</label>
     <input id="dateInput" class="input-box" type="datetime-local" required>
 
-    <label class="label">Weather</label>
+    <label class="label" for="weatherInput">Weather</label>
 
     <div class="weather-box">
         <div class="weather-icon">⛅</div>
@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <label class="label">Mood</label>
+    <label class="label" for="moodInput">Mood</label>
     <select id="moodInput" class="input-box" required>
         <option value="">How are you feeling?</option>
         <option>Happy</option>
@@ -50,17 +50,17 @@
         <option>Excited</option>
     </select>
 
-    <label class="label">Content</label>
+    <label class="label" for="contentInput">Content</label>
     <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required></textarea>
 
-    <label class="label">Tags (comma-separated)</label>
+    <label class="label" for="tagsInput">Tags (comma-separated)</label>
     <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals">
 
     <h3 class="label">Customize Appearance</h3>
 
     <div class="appearance-grid">
         <div>
-            <label class="label">Background</label>
+            <label class="label" for="backgroundInput">Background</label>
             <select id="backgroundInput" class="input-box">
                 <option value="default">Default</option>
                 <option value="light-blue">Light Blue</option>
@@ -70,7 +70,7 @@
         </div>
 
         <div>
-            <label class="label">Font Style</label>
+            <label class="label" for="fontInput">Font Style</label>
             <select id="fontInput" class="input-box">
                 <option value="default">Default</option>
                 <option value="serif">Serif</option>
