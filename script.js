@@ -26,7 +26,6 @@ function formatDateForCard(isoString) {
   return `${day} ${month} ${year}`;
 }
 
-// Assign unique IDs to old entries if missing
 function ensureIDs() {
   const entries = loadEntries();
   let changed = false;
@@ -42,6 +41,7 @@ function ensureIDs() {
 function renderEntries() {
   const container = document.getElementById('entriesContainer');
   if (!container) return;
+  const liveRegion = document.getElementById('entryLiveRegion');
 
   const entries = loadEntries();
   container.innerHTML = '';
@@ -58,8 +58,18 @@ function renderEntries() {
     .slice()
     .sort((a,b)=> new Date(b.date)-new Date(a.date))
     .forEach(entry => {
+  
+      // Accessibility for screen reader announcement
+      if (liveRegion) {
+        liveRegion.textContent = `Loaded entry titled ${entry.title}`;
+      }
       const card = document.createElement('div');
       card.className = 'card' + (entry.background === 'peach' ? ' peach' : '');
+
+       // Make card keyboard focusable & readable by screen readers
+      card.setAttribute('role', 'listitem');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Journal entry titled ${entry.title}`);
 
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'delete-btn';
@@ -69,6 +79,13 @@ function renderEntries() {
         const updated = all.filter(item => item.id !== entry.id);
         saveEntries(updated);
         renderEntries();
+      });
+      // Delete using keyboard
+      deleteBtn.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          deleteBtn.click();
+        }
       });
 
       const title = document.createElement('h2'); title.textContent = entry.title;

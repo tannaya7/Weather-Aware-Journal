@@ -201,3 +201,29 @@ body {
     display: block;
     margin: 0 auto;
 }
+/* Focus styles for accessibility */
+button:focus, input:focus, select:focus, textarea:focus, .card:focus {
+    outline: 3px solid;
+    outline-offset: 3px;
+}
+
+/* Improve contrast for weather text */
+.weather-temp {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+/* Ensure focus visibility */
+.card:focus {
+    transform: scale(1.02);
+}
+
+/* Hide live screen-reader region visually */
+.sr-only, .sr-only * {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+}
