@@ -25,19 +25,20 @@
 <div class="container">
 
     <div class="top-actions">
-        <input type="text" class="search" placeholder="Search entries...">
-        
-        <select class="filter">
+        <input type="text" class="search" placeholder="Search entries..." aria-label="Search journal entries">
+        <select class="filter" aria-label="Sort journal entries">
             <option>Newest First</option>
             <option>Oldest First</option>
         </select>
-        <button class="calender">calender</button>
-        <button class="moodtr">mood tracker</button>
+        <button class="calender" role="button" tabindex="0" aria-label="Open calendar view">calender</button>
+        <button class="moodtr" role="button" tabindex="0" aria-label="Open mood tracker">mood tracker</button>
     </div>
 
     <h2 style="color:#fff;margin-top:40px;">Your Entries</h2>
 
-    <div id="entriesContainer" class="journal-grid">
+    <div aria-live="polite" id="entryLiveRegion" class="sr-only"></div>
+    
+    <div id="entriesContainer" class="journal-grid" role="list" aria-label="Journal entries">
         <!-- Entries will be injected here by JavaScript -->
     </div>
 </div>

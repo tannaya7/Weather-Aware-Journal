@@ -22,11 +22,12 @@
 <div class="container form-page">
 
     <form id="entryForm">
+
     <label class="label" for="titleInput">Title</label>
-    <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required>
+    <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required aria-required="true">
 
     <label class="label" for="dateInput">Date</label>
-    <input id="dateInput" class="input-box" type="datetime-local" required>
+    <input id="dateInput" class="input-box" type="datetime-local" required aria-required="true">
 
     <label class="label" for="weatherInput">Weather</label>
 
@@ -42,7 +43,7 @@
     </div>
 
     <label class="label" for="moodInput">Mood</label>
-    <select id="moodInput" class="input-box" required>
+    <select id="moodInput" class="input-box" required aria-required="true">
         <option value="">How are you feeling?</option>
         <option>Happy</option>
         <option>Peaceful</option>
@@ -51,10 +52,10 @@
     </select>
 
     <label class="label" for="contentInput">Content</label>
-    <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required></textarea>
+    <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required aria-required="true"></textarea>
 
     <label class="label" for="tagsInput">Tags (comma-separated)</label>
-    <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals">
+    <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals" aria-label="Add tags separated by comma">
 
     <h3 class="label">Customize Appearance</h3>
 
@@ -80,7 +81,7 @@
         </div>
     </div>
 
-    <button type="submit" class="blue-btn submit-btn" style="margin-top:30px;width:200px;">
+    <button type="submit" class="blue-btn submit-btn" style="margin-top:30px;width:200px;" aria-label="Submit new journal entry">
         Submit Entry
     </button>
     </form>
