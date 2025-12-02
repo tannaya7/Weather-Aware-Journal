@@ -1,92 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>New Entry</title>
-<link rel="stylesheet" href="style.css">
-<script defer src="script.js"></script>
+    <meta charset="UTF-8">
+    <title>New Entry</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="js/main.js"></script>
 </head>
 
 <body>
 
-<header class="header">
-    <div class="logo-title">
-        <h1>New Entry</h1>
-    </div>
-
-    <div class="actions-right">
-        <button class="cancel-btn" onclick="window.location.href='index.html'">Cancel</button>
-    </div>
-</header>
-
-<div class="container form-page">
-
-    <form id="entryForm">
-
-    <label class="label" for="titleInput">Title</label>
-    <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required aria-required="true">
-
-    <label class="label" for="dateInput">Date</label>
-    <input id="dateInput" class="input-box" type="datetime-local" required aria-required="true">
-
-    <label class="label" for="weatherInput">Weather</label>
-
-    <div class="weather-box">
-        <div class="weather-icon">⛅</div>
-        <div class="weather-temp">26°C</div>
-        <div class="weather-type">Clouds</div>
-
-        <div class="weather-details">
-            <span>💧 58%</span>
-            <span>💨 5 m/s</span>
+    <header class="header">
+        <div class="logo-title">
+            <h1>New Entry</h1>
         </div>
-    </div>
 
-    <label class="label" for="moodInput">Mood</label>
-    <select id="moodInput" class="input-box" required aria-required="true">
-        <option value="">How are you feeling?</option>
-        <option>Happy</option>
-        <option>Peaceful</option>
-        <option>Sad</option>
-        <option>Excited</option>
-    </select>
+        <div class="actions-right">
+             <button type="cancel-btn" class="cancel-btn" onclick="window.location.href='index.html'">
+                Cancel
+             </button>        
+        </div>
+    </header>
 
-    <label class="label" for="contentInput">Content</label>
-    <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required aria-required="true"></textarea>
+    <div class="container form-page">
 
-    <label class="label" for="tagsInput">Tags (comma-separated)</label>
-    <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals" aria-label="Add tags separated by comma">
+        <form id="entryForm">
+            <label class="label" for="titleInput">Title</label>
+            <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required>
 
-    <h3 class="label">Customize Appearance</h3>
+            <label class="label" for="dateInput">Date</label>
+            <input id="dateInput" class="input-box" type="datetime-local" required>
 
-    <div class="appearance-grid">
-        <div>
-            <label class="label" for="backgroundInput">Background</label>
-            <select id="backgroundInput" class="input-box">
-                <option value="default">Default</option>
-                <option value="light-blue">Light Blue</option>
-                <option value="peach">Peach</option>
-                <option value="dark">Dark Mode</option>
+            <label class="label" for="weatherInput">Weather</label>
+
+            <div class="weather-box">
+                <div class="weather-icon">⛅</div>
+                <div class="weather-temp">26°C</div>
+                <div class="weather-type">Clouds</div>
+
+                <div class="weather-details">
+                    <span>💧 58%</span>
+                    <span>💨 5 m/s</span>
+                </div>
+            </div>
+
+            <label class="label" for="moodInput">Mood</label>
+            <select id="moodInput" class="input-box" required>
+                <option value="">How are you feeling?</option>
+                <option>Happy</option>
+                <option>Peaceful</option>
+                <option>Sad</option>
+                <option>Excited</option>
             </select>
-        </div>
 
-        <div>
-            <label class="label" for="fontInput">Font Style</label>
-            <select id="fontInput" class="input-box">
-                <option value="default">Default</option>
-                <option value="serif">Serif</option>
-                <option value="handwritten">Handwritten</option>
-                <option value="monospace">Monospace</option>
-            </select>
-        </div>
+            <label class="label" for="contentInput">Content</label>
+            <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required></textarea>
+
+            <label class="label" for="tagsInput">Tags (comma-separated)</label>
+            <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals">
+
+            <h3 class="label">Customize Appearance</h3>
+
+            <div class="appearance-grid">
+                <div>
+                    <label class="label" for="backgroundInput">Background</label>
+                    <select id="backgroundInput" class="input-box">
+                        <option value="default">Default</option>
+                        <option value="light-blue">Light Blue</option>
+                        <option value="peach">Peach</option>
+                        <option value="dark">Dark Mode</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="label" for="fontInput">Font Style</label>
+                    <select id="fontInput" class="input-box">
+                        <option value="default">Default</option>
+                        <option value="serif">Serif</option>
+                        <option value="handwritten">Handwritten</option>
+                        <option value="monospace">Monospace</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="blue-btn submit-btn" style="margin-top:30px;width:200px;">
+                Submit Entry
+            </button>
+        </form>
+
     </div>
-
-    <button type="submit" class="blue-btn submit-btn" style="margin-top:30px;width:200px;" aria-label="Submit new journal entry">
-        Submit Entry
-    </button>
-    </form>
-
-</div>
 
 </body>
+
 </html>
