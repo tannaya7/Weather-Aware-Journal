@@ -46,15 +46,22 @@ body {
 }
 
 .cancel-btn {
-    background: transparent;
-    color: #d4d4d4;
-    border: none;
+    background: #4da8ff;
+    border:none;
     padding: 12px 20px;
+    border-radius: 10px;   
+    color: white;
+    font-weight: 600;
     font-size: 15px;
     cursor: pointer;
 }
 
-.search, .filter, .input-box, textarea,.moodtr,.calender {
+.search,
+.filter,
+.input-box,
+textarea,
+.moodtr,
+.calender {
     background: #0e203b;
     border: 1px solid #294167;
     color: white;
@@ -63,7 +70,9 @@ body {
     width: 260px;
 }
 
-.filter, .moodtr,.calender {
+.filter,
+.moodtr,
+.calender {
     width: 180px;
 }
 
@@ -106,6 +115,7 @@ body {
     color: white;
     margin-right: 5px;
 }
+
 .label {
     display: block;
     margin-top: 22px;
@@ -170,7 +180,7 @@ body {
     flex-wrap: wrap;
 }
 
-.appearance-grid > div {
+.appearance-grid>div {
     flex: 1;
     min-width: 200px;
 }
@@ -200,30 +210,4 @@ body {
 .submit-btn {
     display: block;
     margin: 0 auto;
-}
-/* Focus styles for accessibility */
-button:focus, input:focus, select:focus, textarea:focus, .card:focus {
-    outline: 3px solid;
-    outline-offset: 3px;
-}
-
-/* Improve contrast for weather text */
-.weather-temp {
-    font-size: 40px;
-    font-weight: bold;
-}
-
-/* Ensure focus visibility */
-.card:focus {
-    transform: scale(1.02);
-}
-
-/* Hide live screen-reader region visually */
-.sr-only, .sr-only * {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    border: 0;
 }
