@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Journal Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="js/main.js"></script>
+</head>
+
+<body>
+
+    <header class="header" role="banner">
+        <div class="logo-title">
+            <span class="icon" aria-hidden="true">🌥️</span>
+            <h1>Weather Journal</h1>
+        </div>
+
+        <div class="actions-right">
+            <button class="blue-btn" onclick="window.location.href='new-entry.html'"
+                aria-label="Create new journal entry">
+                + New Entry
+            </button>
+        </div>
+    </header>
+
+    <div class="container" id="main-content" role="main">
+
+        <div class="top-actions" role="search">
+            <input type="text" class="search" placeholder="Search entries..." aria-label="Search journal entries"
+                id="search-input">
+
+            <select class="filter" aria-label="Sort entries" id="sort-select">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+            </select>
+            <button class="calender" type="button" aria-pressed="false"
+                aria-label="Filter to show only today's entries">Today</button>
+            <button class="moodtr" type="button" aria-label="View mood summary" aria-expanded="false">Mood
+                tracker</button>
+        </div>
+
+        <h2 style="color:#fff;margin-top:40px;" id="entries-heading">Your Entries</h2>
+
+        <div id="entriesContainer" class="journal-grid" role="list" aria-labelledby="entries-heading">
+            <!-- Entries will be injected here by JavaScript -->
+        </div>
+        <div id="entryLiveRegion" class="sr-only" aria-live="polite"></div>
+    </div>
+
+</body>
+
+</html>
