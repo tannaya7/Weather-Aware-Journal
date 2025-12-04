@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Entry - Weather Journal</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="js/main.js"></script>
+</head>
+
+<body>
+
+    <header class="header" role="banner">
+        <div class="logo-title">
+            <h1>New Entry</h1>
+        </div>
+
+        <div class="actions-right">
+            <button type="button" class="cancel-btn" onclick="window.location.href='index.html'"
+                aria-label="Cancel and return to dashboard">
+                Cancel
+            </button>
+        </div>
+    </header>
+
+    <div class="container form-page" id="main-content" role="main">
+
+        <form id="entryForm" novalidate>
+            <label class="label" for="titleInput">Title <span class="sr-only">required</span></label>
+            <input id="titleInput" class="input-box" type="text" placeholder="Today's adventure..." required
+                aria-required="true" aria-invalid="false">
+
+            <label class="label" for="dateInput">Date <span class="sr-only">required</span></label>
+            <input id="dateInput" class="input-box" type="datetime-local" required aria-required="true"
+                aria-invalid="false">
+
+            <label class="label" for="locationInput">Weather</label>
+
+            <div class="weather-row-form">
+                <div class="weather-location">
+                    <label class="label" for="locationInput">Location</label>
+                    <input id="locationInput" class="input-box" type="text" placeholder="City name (e.g. London)"
+                        autocomplete="off" aria-describedby="locationHelp">
+                    <span id="locationHelp" class="sr-only">Enter a city name to fetch current weather data</span>
+                    <button type="button" id="fetchWeatherBtn" class="blue-btn small-btn"
+                        aria-label="Fetch weather data for entered location">Update Weather</button>
+                    <div id="weatherStatus" class="helper-text" aria-live="polite" aria-atomic="true"></div>
+                </div>
+
+                <div class="weather-box" role="region" aria-label="Current weather preview">
+                    <div id="weatherIcon" class="weather-icon" aria-hidden="true">⛅</div>
+                    <div id="weatherTemp" class="weather-temp" aria-label="Temperature 26 degrees Celsius">26°C</div>
+                    <div id="weatherType" class="weather-type">Clouds</div>
+
+                    <div id="weatherDetails" class="weather-details">
+                        <span aria-label="Humidity 58 percent"><span aria-hidden="true">💧</span> 58%</span>
+                        <span aria-label="Wind speed 5 meters per second"><span aria-hidden="true">💨</span> 5
+                            m/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <label class="label" for="moodInput">Mood <span class="sr-only">required</span></label>
+            <select id="moodInput" class="input-box" required aria-required="true" aria-invalid="false">
+                <option value="">How are you feeling?</option>
+                <option value="Happy">Happy</option>
+                <option value="Peaceful">Peaceful</option>
+                <option value="Sad">Sad</option>
+                <option value="Excited">Excited</option>
+            </select>
+
+            <label class="label" for="contentInput">Content <span class="sr-only">required</span></label>
+            <textarea id="contentInput" class="textarea" placeholder="Write your thoughts..." required
+                aria-required="true" aria-invalid="false"></textarea>
+
+            <label class="label" for="tagsInput">Tags (comma-separated)</label>
+            <input id="tagsInput" class="input-box" type="text" placeholder="travel, inspiration, goals">
+
+            <fieldset class="appearance-fieldset">
+                <legend class="section-title">Customize Appearance</legend>
+
+                <div class="appearance-grid">
+                    <div>
+                        <label class="label" for="backgroundInput">Background</label>
+                        <select id="backgroundInput" class="input-box" aria-label="Choose background style">
+                            <option value="default">Default</option>
+                            <option value="light-blue">Light Blue</option>
+                            <option value="peach">Peach</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label" for="fontInput">Font Style</label>
+                        <select id="fontInput" class="input-box" aria-label="Choose font style">
+                            <option value="default">Default</option>
+                            <option value="serif">Serif</option>
+                            <option value="handwritten">Handwritten</option>
+                            <option value="monospace">Monospace</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div id="formErrors" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+            <button type="submit" class="blue-btn submit-btn" aria-label="Submit journal entry">
+                Submit Entry
+            </button>
+        </form>
+
+    </div>
+
+</body>
+
+</html>
