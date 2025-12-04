@@ -22,7 +22,7 @@ A modern, accessible client-side web application for creating and managing perso
 ## 🚀 Getting Started
 
 ### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, Edge)
+- A modern web browser (Chrome)
 - A local development server (optional, for best experience)
 
 ### Installation
@@ -176,8 +176,6 @@ Potential features for future development:
 - Advanced search with filters
 - Data visualization and insights
 - Photo attachments
-- Rich text editor
-- Calendar view
 - Weather forecast for future entries
 
 ## 📄 License
