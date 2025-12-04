@@ -1,1 +1,0 @@
-# Weather-Aware-Journal
