@@ -1,0 +1,31 @@
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-header-bg);
+  color: var(--color-text);
+  padding: 12px 18px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 30;
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+}
+
+.toast button {
+  background: var(--color-accent);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-on-accent);
+}
+
+.closeBtn {
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 16px;
+}
