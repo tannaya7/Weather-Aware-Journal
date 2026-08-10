@@ -1,0 +1,49 @@
+/* Design tokens: colors, spacing, radius. A warm "candlelit" palette is the
+   default (dark) theme for the app chrome. This is independent from the
+   per-entry background/font customization on individual entries. */
+
+:root {
+  --color-bg: #1b140d;
+  --color-bg-gradient: linear-gradient(160deg, #241a11 0%, #140d08 100%);
+  --color-header-bg: #17110b;
+  --color-surface: #2a2015;
+  --color-surface-raised: rgba(38, 28, 18, 0.94);
+  --color-border: #4a381f;
+  --color-accent: #dda15e;
+  --color-accent-strong: #c98a3f;
+  /* Text color placed ON TOP of --color-accent fills (buttons, chips). Amber
+     is too light for white text to pass contrast, so dark ink is used here. */
+  --color-on-accent: #1b140d;
+  --color-text: #f3e9da;
+  --color-text-muted: #c9b79c;
+  --color-card-bg: #2b2117;
+  --color-card-text: #f3e9da;
+  --color-card-muted: #b9a789;
+  --color-danger: #b6453c;
+  --color-danger-strong: #9c3931;
+  --color-success: #7fb069;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.5);
+
+  --font-sans: 'Poppins', 'Inter', system-ui, sans-serif;
+  /* Default reading typeface for entry titles/content — distinct from the
+     explicit "Serif" per-entry appearance choice below. */
+  --font-reading: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --font-serif: 'Georgia', 'Times New Roman', serif;
+  --font-handwritten: 'Comic Sans MS', 'Segoe Print', cursive;
+  --font-mono: 'Fira Code', 'Consolas', monospace;
+}
