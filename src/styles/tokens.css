@@ -1,6 +1,7 @@
 /* Design tokens: colors, spacing, radius. A warm "candlelit" palette is the
-   default (dark) theme for the app chrome. This is independent from the
-   per-entry background/font customization on individual entries. */
+   default (dark); [data-theme="light"] switches to a warm "paper" palette.
+   This app-wide theme is independent from the per-entry background/font
+   customization on individual entries. */
 
 :root {
   --color-bg: #1b140d;
@@ -46,4 +47,28 @@
   --font-serif: 'Georgia', 'Times New Roman', serif;
   --font-handwritten: 'Comic Sans MS', 'Segoe Print', cursive;
   --font-mono: 'Fira Code', 'Consolas', monospace;
+}
+
+:root[data-theme='light'] {
+  --color-bg: #f6efe3;
+  --color-bg-gradient: linear-gradient(160deg, #faf5ea 0%, #f0e6d2 100%);
+  --color-header-bg: #fffaf0;
+  --color-surface: #fffaf0;
+  --color-surface-raised: #fffdf8;
+  --color-border: #e2d3b8;
+  --color-accent: #a8571f;
+  --color-accent-strong: #8c4718;
+  --color-on-accent: #ffffff;
+  --color-text: #2b2018;
+  --color-text-muted: #7c6b54;
+  --color-card-bg: #fffaf0;
+  --color-card-text: #2b2018;
+  --color-card-muted: #6b5c47;
+  --color-danger: #b3413a;
+  --color-danger-strong: #96332c;
+  --color-success: #4f7942;
+
+  --shadow-sm: 0 4px 10px rgba(43, 32, 24, 0.08);
+  --shadow-md: 0 10px 25px rgba(43, 32, 24, 0.1);
+  --shadow-lg: 0 18px 40px rgba(43, 32, 24, 0.16);
 }
