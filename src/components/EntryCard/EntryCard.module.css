@@ -1,0 +1,157 @@
+.row {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-card-bg);
+  color: var(--color-card-text);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  position: relative;
+}
+
+.row:hover,
+.row:focus-within {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.peach {
+  background: #fdeee2;
+  color: #1e1e1e;
+}
+
+.lightBlue {
+  background: #e0f2ff;
+  color: #1e1e1e;
+}
+
+.dark {
+  background: #0f1d2e;
+  color: #f4f7fc;
+}
+
+.dateBadge {
+  flex: 0 0 56px;
+  text-align: center;
+  color: var(--color-card-muted);
+}
+
+.day {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: inherit;
+}
+
+.weekday {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.linkArea {
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.linkArea:hover .preview,
+.linkArea:focus-visible .preview {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 4px;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-card-muted);
+  margin-bottom: 6px;
+}
+
+.preview {
+  margin: 0;
+  font-family: var(--font-reading);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+}
+
+.preview::first-line {
+  font-weight: 600;
+  font-size: 1.08em;
+}
+
+.tags {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+.dark .tag {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.iconBtn {
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--color-border);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.iconBtn:hover {
+  opacity: 1;
+}
+
+.deleteBtn {
+  border-color: transparent;
+  color: var(--color-danger);
+}
+
+@media (max-width: 560px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .dateBadge {
+    flex: 0 0 auto;
+    text-align: left;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+}
