@@ -3,6 +3,8 @@ export const MOODS = [
   { value: 'Peaceful', emoji: '😌' },
   { value: 'Sad', emoji: '😢' },
   { value: 'Excited', emoji: '🤩' },
+  { value: 'Angry', emoji: '😠' },
+  { value: 'Anxious', emoji: '😰' },
 ];
 
 export function emojiForMood(mood) {
