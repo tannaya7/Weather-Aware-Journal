@@ -1,0 +1,54 @@
+.page {
+  max-width: 1100px;
+}
+
+.yearNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.yearLabel {
+  font-family: var(--font-reading);
+  font-size: 24px;
+  min-width: 90px;
+  text-align: center;
+}
+
+.yearBtn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.yearBtn:hover {
+  border-color: var(--color-accent);
+}
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.summaryCard {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.summaryHeading {
+  font-family: var(--font-reading);
+  font-size: 16px;
+  margin: 0 0 var(--space-4);
+}
