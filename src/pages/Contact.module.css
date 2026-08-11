@@ -1,0 +1,42 @@
+.page {
+  max-width: 560px;
+}
+
+.card {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-5);
+  margin: var(--space-5) 0 var(--space-6);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-family: var(--font-reading);
+  font-size: 26px;
+  margin: 0 0 var(--space-3);
+}
+
+.text {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+}
+
+.email {
+  display: inline-block;
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.email:hover {
+  text-decoration: underline;
+}
