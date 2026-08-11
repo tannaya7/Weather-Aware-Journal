@@ -6,14 +6,8 @@ import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { formatDateLong } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { emojiForMood } from '../lib/moods.js';
-import { fontFamilyFor } from '../lib/entryStyle.js';
+import { fontFamilyFor, weatherCardStyle } from '../lib/entryStyle.js';
 import styles from './EntryDetail.module.css';
-
-const BACKGROUND_CLASS = {
-  peach: styles.peach,
-  'light-blue': styles.lightBlue,
-  dark: styles.dark,
-};
 
 export function EntryDetail() {
   const { id } = useParams();
@@ -38,7 +32,6 @@ export function EntryDetail() {
   }
 
   const title = getEntryTitle(entry);
-  const extraClass = BACKGROUND_CLASS[entry.background] || '';
 
   function handleDelete() {
     deleteEntry(entry.id);
@@ -62,8 +55,8 @@ export function EntryDetail() {
 
       <div className={`container ${styles.page}`} id="main-content" role="main">
         <article
-          className={[styles.article, extraClass].filter(Boolean).join(' ')}
-          style={{ fontFamily: fontFamilyFor(entry) }}
+          className={styles.article}
+          style={{ fontFamily: fontFamilyFor(entry), ...weatherCardStyle(entry) }}
         >
           <p className={styles.date}>{formatDateLong(entry.date)}</p>
           <h1 className={styles.title}>{title}</h1>
@@ -92,6 +85,8 @@ export function EntryDetail() {
               ))}
             </div>
           )}
+
+          {entry.image && <img src={entry.image} alt="" className={styles.image} />}
 
           <div className={styles.content}>{entry.content}</div>
         </article>
