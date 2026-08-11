@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { WeatherBox } from '../WeatherBox/WeatherBox.jsx';
 import { useWeather } from '../../hooks/useWeather.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 import { MOODS } from '../../lib/moods.js';
+import { readImageFile } from '../../lib/imageUpload.js';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -21,10 +22,12 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
   const [mood, setMood] = useState(initialEntry?.mood || '');
   const [date, setDate] = useState(toDatetimeLocal(initialEntry?.date));
   const [tagsRaw, setTagsRaw] = useState((initialEntry?.tags || []).join(', '));
-  const [background, setBackground] = useState(initialEntry?.background || 'default');
   const [font, setFont] = useState(initialEntry?.font || 'default');
   const [location, setLocation] = useState(initialEntry?.locationName || '');
   const [contentError, setContentError] = useState(false);
+  const [image, setImage] = useState(initialEntry?.image || null);
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef(null);
 
   const initialWeather = initialEntry?.weatherIcon
     ? {
@@ -38,6 +41,24 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
     : null;
 
   const { weather, status, statusMessage, fetchForCity } = useWeather(initialWeather);
+
+  async function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    try {
+      setImage(await readImageFile(file));
+      setImageError('');
+    } catch (error) {
+      setImageError(error.message);
+    }
+  }
+
+  function handleRemoveImage() {
+    setImage(null);
+    setImageError('');
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -61,8 +82,8 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
       mood,
       date: date || toDatetimeLocal(),
       tags,
-      background,
       font,
+      image: image || undefined,
       weatherIcon: weather?.icon,
       temperature: weather?.temperature,
       weatherType: weather?.weatherType,
@@ -154,27 +175,46 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
         />
       </div>
 
+      <div className={styles.field}>
+        <label className={styles.quietLabel} htmlFor="imageInput">
+          Photo <span className={styles.optional}>(optional)</span>
+        </label>
+        {image ? (
+          <div className={styles.imagePreviewRow}>
+            <img src={image} alt="" className={styles.imagePreview} />
+            <Button type="button" small variant="secondary" onClick={handleRemoveImage}>
+              Remove photo
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            small
+            variant="secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Add a photo
+          </Button>
+        )}
+        <input
+          ref={fileInputRef}
+          id="imageInput"
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={handleImageChange}
+        />
+        {imageError && (
+          <p className={styles.imageError} role="alert">
+            {imageError}
+          </p>
+        )}
+      </div>
+
       <details className={styles.appearanceDetails}>
         <summary className={styles.quietLabel}>Customize appearance</summary>
         <div className={styles.appearanceGrid}>
-          <div>
-            <label className={styles.quietLabel} htmlFor="backgroundInput">
-              Background
-            </label>
-            <select
-              id="backgroundInput"
-              className={styles.inputBox}
-              aria-label="Choose background style"
-              value={background}
-              onChange={(e) => setBackground(e.target.value)}
-            >
-              <option value="default">Default</option>
-              <option value="light-blue">Light Blue</option>
-              <option value="peach">Peach</option>
-              <option value="dark">Dark Mode</option>
-            </select>
-          </div>
-
           <div>
             <label className={styles.quietLabel} htmlFor="fontInput">
               Font Style
@@ -193,6 +233,9 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
             </select>
           </div>
         </div>
+        <p className={styles.appearanceNote}>
+          Card color is set automatically from the weather you add below.
+        </p>
       </details>
 
       <Button type="submit" className={styles.submitBtn}>

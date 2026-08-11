@@ -2,22 +2,15 @@ import { Link } from 'react-router-dom';
 import { getDateBadgeParts } from '../../lib/dateFormat.js';
 import { getEntryTitle } from '../../lib/entryTitle.js';
 import { emojiForMood } from '../../lib/moods.js';
-import { fontFamilyFor } from '../../lib/entryStyle.js';
+import { fontFamilyFor, weatherCardStyle } from '../../lib/entryStyle.js';
 import styles from './EntryCard.module.css';
 
-const BACKGROUND_CLASS = {
-  peach: styles.peach,
-  'light-blue': styles.lightBlue,
-  dark: styles.dark,
-};
-
 export function EntryCard({ entry, onEdit, onDelete }) {
-  const extraClass = BACKGROUND_CLASS[entry.background] || '';
   const { day, weekday } = getDateBadgeParts(entry.date);
   const title = getEntryTitle(entry);
 
   return (
-    <li className={[styles.row, extraClass].filter(Boolean).join(' ')}>
+    <li className={styles.row} style={weatherCardStyle(entry)}>
       <div className={styles.dateBadge} aria-hidden="true">
         <span className={styles.day}>{day}</span>
         <span className={styles.weekday}>{weekday}</span>

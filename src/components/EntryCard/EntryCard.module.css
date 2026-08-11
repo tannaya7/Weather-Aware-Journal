@@ -16,25 +16,11 @@
   transform: translateY(-1px);
 }
 
-.peach {
-  background: #fdeee2;
-  color: #1e1e1e;
-}
-
-.lightBlue {
-  background: #e0f2ff;
-  color: #1e1e1e;
-}
-
-.dark {
-  background: #0f1d2e;
-  color: #f4f7fc;
-}
-
 .dateBadge {
   flex: 0 0 56px;
   text-align: center;
-  color: var(--color-card-muted);
+  color: inherit;
+  opacity: 0.7;
 }
 
 .day {
@@ -73,7 +59,8 @@
   gap: var(--space-3);
   align-items: center;
   font-size: 13px;
-  color: var(--color-card-muted);
+  color: inherit;
+  opacity: 0.8;
   margin-bottom: 6px;
 }
 
@@ -106,10 +93,6 @@
   padding: 3px 10px;
   border-radius: 14px;
   font-size: 12px;
-}
-
-.dark .tag {
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .actions {

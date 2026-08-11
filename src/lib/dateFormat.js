@@ -87,6 +87,13 @@ export function formatMonthLabel(isoString) {
   return `${MONTH_NAMES_LONG[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// 0-indexed (0 = January), for calendar-grid style month headers.
+export function monthNameLong(monthIndex) {
+  return MONTH_NAMES_LONG[monthIndex];
+}
+
+export const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
 export function isSameDay(dateString, refDate) {
   if (!dateString) return false;
   const d = new Date(dateString);

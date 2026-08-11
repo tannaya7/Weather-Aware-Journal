@@ -119,6 +119,26 @@
   border-top: 1px solid var(--color-border);
 }
 
+.imagePreviewRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.imagePreview {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.imageError {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin: var(--space-2) 0 0;
+}
+
 .inputBox {
   width: 100%;
   max-width: 100%;
@@ -139,6 +159,12 @@
 
 .appearanceDetails summary {
   cursor: pointer;
+}
+
+.appearanceNote {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: var(--space-3) 0 0;
 }
 
 .appearanceGrid {

@@ -10,25 +10,11 @@
   margin: var(--space-5) 0 var(--space-6);
 }
 
-.peach {
-  background: #fdeee2;
-  color: #1e1e1e;
-}
-
-.lightBlue {
-  background: #e0f2ff;
-  color: #1e1e1e;
-}
-
-.dark {
-  background: #0f1d2e;
-  color: #f4f7fc;
-}
-
 .date {
   margin: 0 0 var(--space-2);
   font-size: 14px;
-  color: var(--color-text-muted);
+  color: inherit;
+  opacity: 0.7;
 }
 
 .title {
@@ -43,7 +29,8 @@
   flex-wrap: wrap;
   gap: var(--space-4);
   font-size: 15px;
-  color: var(--color-text-muted);
+  color: inherit;
+  opacity: 0.8;
   margin-bottom: var(--space-4);
 }
 
@@ -59,6 +46,15 @@
   padding: 4px 12px;
   border-radius: 14px;
   font-size: 13px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
 }
 
 .content {

@@ -4,9 +4,12 @@ import { AnnouncerProvider } from './context/AnnouncerContext.jsx';
 import { EntriesProvider } from './context/EntriesContext.jsx';
 import { SkipLink } from './components/SkipLink/SkipLink.jsx';
 import { GlobalUndoToast } from './components/UndoToast/GlobalUndoToast.jsx';
+import { AppLayout } from './components/AppLayout/AppLayout.jsx';
 import { Dashboard } from './pages/Dashboard.jsx';
 import { EntryFormPage } from './pages/EntryFormPage.jsx';
 import { EntryDetail } from './pages/EntryDetail.jsx';
+import { Calendar } from './pages/Calendar.jsx';
+import { Contact } from './pages/Contact.jsx';
 
 export function App() {
   return (
@@ -16,10 +19,14 @@ export function App() {
           <HashRouter>
             <SkipLink />
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/new" element={<EntryFormPage />} />
-              <Route path="/edit/:id" element={<EntryFormPage />} />
-              <Route path="/entry/:id" element={<EntryDetail />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/new" element={<EntryFormPage />} />
+                <Route path="/edit/:id" element={<EntryFormPage />} />
+                <Route path="/entry/:id" element={<EntryDetail />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/contact" element={<Contact />} />
+              </Route>
             </Routes>
             <GlobalUndoToast />
           </HashRouter>
