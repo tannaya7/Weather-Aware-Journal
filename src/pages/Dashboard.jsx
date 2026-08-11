@@ -8,6 +8,8 @@ import { EntryTimeline } from '../components/EntryTimeline/EntryTimeline.jsx';
 import { Pagination } from '../components/Pagination/Pagination.jsx';
 import { MoodSummaryPanel } from '../components/MoodSummaryPanel/MoodSummaryPanel.jsx';
 import { ExportImportControls } from '../components/ExportImportControls/ExportImportControls.jsx';
+import { MoodWeatherChart } from '../components/MoodWeatherChart/MoodWeatherChart.jsx';
+import { ImageGallery } from '../components/ImageGallery/ImageGallery.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { isSameDay } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
@@ -109,6 +111,9 @@ export function Dashboard() {
           moodPanelOpen={moodPanelOpen}
           onToggleMoodPanel={() => setMoodPanelOpen((open) => !open)}
         />
+
+        <MoodWeatherChart entries={entries} />
+        <ImageGallery entries={entries} />
 
         <h2 className={styles.heading} id="entries-heading">
           Your Journal
