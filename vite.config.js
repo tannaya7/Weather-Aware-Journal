@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/Weather-Aware-Journal/',
   plugins: [
     react(),
     VitePWA({
@@ -15,7 +16,8 @@ export default defineConfig({
         theme_color: '#03265f',
         background_color: '#1e4986',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/Weather-Aware-Journal/',
+        scope: '/Weather-Aware-Journal/',
         icons: [
           {
             src: 'icons/icon.svg',
