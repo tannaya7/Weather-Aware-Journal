@@ -39,7 +39,7 @@ describe('useDraftAutosave', () => {
 
     vi.advanceTimersByTime(300);
     expect(onSave).toHaveBeenCalledTimes(1);
-    expect(onSave).toHaveBeenCalledWith({ content: 'Hi' });
+    expect(onSave).toHaveBeenCalledWith({ content: 'Hi' }, { urgent: false });
   });
 
   it('saves null when the values go back to the baseline', () => {
@@ -47,7 +47,7 @@ describe('useDraftAutosave', () => {
     rerender({ values: { content: 'oops' } });
     rerender({ values: { content: '' } });
     vi.advanceTimersByTime(800);
-    expect(onSave).toHaveBeenLastCalledWith(null);
+    expect(onSave).toHaveBeenLastCalledWith(null, { urgent: false });
   });
 
   it('saves right away when the tab is hidden', () => {
@@ -59,14 +59,14 @@ describe('useDraftAutosave', () => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
 
-    expect(onSave).toHaveBeenCalledWith({ content: 'Leaving soon' });
+    expect(onSave).toHaveBeenCalledWith({ content: 'Leaving soon' }, { urgent: true });
   });
 
   it('saves right away when the form closes', () => {
     const { onSave, rerender, unmount } = setup();
     rerender({ values: { content: 'Navigating away' } });
     unmount();
-    expect(onSave).toHaveBeenCalledWith({ content: 'Navigating away' });
+    expect(onSave).toHaveBeenCalledWith({ content: 'Navigating away' }, { urgent: true });
   });
 
   it('stops saving once the entry is saved for real', () => {
