@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
 import { EntryForm } from '../components/EntryForm/EntryForm.jsx';
@@ -11,16 +12,31 @@ export function EntryFormPage() {
   const navigate = useNavigate();
   const { addEntry, updateEntry, getEntryById } = useEntriesContext();
 
+  const [saveError, setSaveError] = useState('');
+  const saveErrorRef = useRef(null);
+
+  useEffect(() => {
+    if (saveError) saveErrorRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  }, [saveError]);
+
   const isEdit = Boolean(id);
   const existingEntry = isEdit ? getEntryById(id) : null;
 
+  // Returns false when saving failed, so the form keeps what you wrote and
+  // doesn't announce success.
   function handleSubmit(data) {
-    if (isEdit && existingEntry) {
-      updateEntry(existingEntry.id, data);
-    } else {
-      addEntry(data);
+    try {
+      if (isEdit && existingEntry) {
+        updateEntry(existingEntry.id, data);
+      } else {
+        addEntry(data);
+      }
+    } catch (error) {
+      setSaveError(error.message || 'Something went wrong saving this entry.');
+      return false;
     }
     navigate('/');
+    return true;
   }
 
   return (
@@ -38,6 +54,11 @@ export function EntryFormPage() {
       </Header>
 
       <div className={`container ${styles.page}`} id="main-content" role="main">
+        {saveError && (
+          <p ref={saveErrorRef} className={styles.saveError} role="alert">
+            {saveError}
+          </p>
+        )}
         {isEdit && !existingEntry ? (
           <p>That entry couldn&apos;t be found. It may have been deleted.</p>
         ) : (

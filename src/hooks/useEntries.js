@@ -14,9 +14,11 @@ function initialEntries() {
 export function useEntries() {
   const [entries, setEntries] = useState(initialEntries);
 
+  // Save first, so a failed save (e.g. StorageFullError) throws to the caller
+  // and leaves the in-memory list matching what's actually stored.
   const persist = useCallback((next) => {
-    setEntries(next);
     saveEntries(next);
+    setEntries(next);
   }, []);
 
   const addEntry = useCallback(

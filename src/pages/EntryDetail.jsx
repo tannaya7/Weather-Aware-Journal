@@ -7,6 +7,7 @@ import { formatDateLong } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { emojiForMood } from '../lib/moods.js';
 import { fontFamilyFor, weatherCardStyle } from '../lib/entryStyle.js';
+import { getEntryImages } from '../lib/entryImages.js';
 import styles from './EntryDetail.module.css';
 
 export function EntryDetail() {
@@ -32,6 +33,7 @@ export function EntryDetail() {
   }
 
   const title = getEntryTitle(entry);
+  const images = getEntryImages(entry);
 
   function handleDelete() {
     deleteEntry(entry.id);
@@ -86,7 +88,14 @@ export function EntryDetail() {
             </div>
           )}
 
-          {entry.image && <img src={entry.image} alt="" className={styles.image} />}
+          {images.length === 1 && <img src={images[0]} alt="" className={styles.image} />}
+          {images.length > 1 && (
+            <div className={styles.imageGrid}>
+              {images.map((src, index) => (
+                <img key={index} src={src} alt="" className={styles.gridImage} />
+              ))}
+            </div>
+          )}
 
           <div className={styles.content}>{entry.content}</div>
         </article>

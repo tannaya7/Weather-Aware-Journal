@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadEntries, saveEntries, ensureIDs } from '../../src/lib/storage.js';
+import { loadEntries, saveEntries, ensureIDs, StorageFullError } from '../../src/lib/storage.js';
 
 describe('storage', () => {
   beforeEach(() => {
@@ -21,6 +21,25 @@ describe('storage', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(loadEntries()).toEqual([]);
     warnSpy.mockRestore();
+  });
+
+  it('throws a StorageFullError with a readable message when storage is full', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    });
+
+    expect(() => saveEntries([{ id: 1 }])).toThrow(StorageFullError);
+    expect(() => saveEntries([{ id: 1 }])).toThrow(/out of storage space/);
+    spy.mockRestore();
+  });
+
+  it('rethrows other storage errors unchanged', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    expect(() => saveEntries([])).toThrow('boom');
+    spy.mockRestore();
   });
 
   it('returns an empty array when stored value is not an array', () => {
