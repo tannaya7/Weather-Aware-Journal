@@ -3,6 +3,7 @@ import { Button } from '../Button/Button.jsx';
 import { WeatherBox } from '../WeatherBox/WeatherBox.jsx';
 import { useWeather } from '../../hooks/useWeather.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
+import { WritingPrompt } from '../WritingPrompt/WritingPrompt.jsx';
 import { MOODS } from '../../lib/moods.js';
 import { readImageFile } from '../../lib/imageUpload.js';
 import styles from './EntryForm.module.css';
@@ -95,8 +96,23 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
     announce(isEdit ? 'Journal entry updated successfully.' : 'Journal entry saved.', 'assertive');
   }
 
+  // The prompt becomes the entry's first line (and so its title), with the
+  // cursor left on a fresh line below it.
+  function handleUsePrompt(prompt) {
+    const next = content.trim() ? `${prompt}\n\n${content}` : `${prompt}\n\n`;
+    setContent(next);
+    setContentError(false);
+
+    const textarea = document.getElementById('contentInput');
+    if (textarea) {
+      textarea.focus();
+      requestAnimationFrame(() => textarea.setSelectionRange(next.length, next.length));
+    }
+  }
+
   return (
     <form id="entryForm" className={styles.form} noValidate onSubmit={handleSubmit}>
+      {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
       <label className="sr-only" htmlFor="contentInput">
         What&apos;s on your mind?
       </label>
