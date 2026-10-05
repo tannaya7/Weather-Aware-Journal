@@ -1,0 +1,29 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.flame {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.current {
+  margin: 0;
+  font-family: var(--font-reading);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.detail {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
