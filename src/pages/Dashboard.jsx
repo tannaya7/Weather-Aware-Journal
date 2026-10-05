@@ -4,6 +4,7 @@ import { Header } from '../components/Header/Header.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { SearchSortBar } from '../components/SearchSortBar/SearchSortBar.jsx';
+import { FilterChips } from '../components/FilterChips/FilterChips.jsx';
 import { EntryTimeline } from '../components/EntryTimeline/EntryTimeline.jsx';
 import { Pagination } from '../components/Pagination/Pagination.jsx';
 import { MoodSummaryPanel } from '../components/MoodSummaryPanel/MoodSummaryPanel.jsx';
@@ -13,6 +14,7 @@ import { ImageGallery } from '../components/ImageGallery/ImageGallery.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { isSameDay } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
+import { EMPTY_FILTERS, applyFilters, getFilterOptions, hasActiveFilters } from '../lib/entryFilters.js';
 import styles from './Dashboard.module.css';
 
 const ITEMS_PER_PAGE = 6;
@@ -24,6 +26,7 @@ export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [dateFilterMode, setDateFilterMode] = useState('all');
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
   const [moodPanelOpen, setMoodPanelOpen] = useState(false);
 
@@ -44,13 +47,18 @@ export function Dashboard() {
       list = list.filter((entry) => isSameDay(entry.date, today));
     }
 
+    list = applyFilters(list, filters);
+
     return [...list].sort((a, b) => {
       const aDate = new Date(a.date);
       const bDate = new Date(b.date);
       if (isNaN(aDate) || isNaN(bDate)) return 0;
       return sortOrder === 'oldest' ? aDate - bDate : bDate - aDate;
     });
-  }, [entries, searchTerm, dateFilterMode, sortOrder]);
+  }, [entries, searchTerm, dateFilterMode, filters, sortOrder]);
+
+  const filterOptions = useMemo(() => getFilterOptions(entries), [entries]);
+  const isFiltered = Boolean(searchTerm) || dateFilterMode === 'today' || hasActiveFilters(filters);
 
   const totalPages = Math.max(1, Math.ceil(visibleEntries.length / ITEMS_PER_PAGE));
   const clampedPage = Math.min(currentPage, totalPages);
@@ -78,6 +86,11 @@ export function Dashboard() {
 
   function handleToggleToday() {
     setDateFilterMode((mode) => (mode === 'today' ? 'all' : 'today'));
+    setCurrentPage(1);
+  }
+
+  function handleFiltersChange(next) {
+    setFilters(next);
     setCurrentPage(1);
   }
 
@@ -111,6 +124,7 @@ export function Dashboard() {
           moodPanelOpen={moodPanelOpen}
           onToggleMoodPanel={() => setMoodPanelOpen((open) => !open)}
         />
+        <FilterChips options={filterOptions} filters={filters} onChange={handleFiltersChange} />
 
         <MoodWeatherChart entries={entries} />
         <ImageGallery entries={entries} />
@@ -118,10 +132,15 @@ export function Dashboard() {
         <h2 className={styles.heading} id="entries-heading">
           Your Journal
         </h2>
+        {isFiltered && (
+          <p className={styles.resultCount} role="status">
+            {visibleEntries.length} {visibleEntries.length === 1 ? 'entry' : 'entries'}
+          </p>
+        )}
 
         <EntryTimeline
           entries={paginatedEntries}
-          hasFilters={Boolean(searchTerm) || dateFilterMode === 'today'}
+          hasFilters={isFiltered}
           onEdit={handleEdit}
           onDelete={deleteEntry}
         />
