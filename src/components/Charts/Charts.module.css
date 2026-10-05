@@ -1,0 +1,145 @@
+/* Shared chart anatomy: 2px lines, ringed dots, hairline recessive grid,
+   text in text tokens (never the series color). Colors: --color-chart is
+   validated against both card surfaces (see tokens.css). */
+
+.chartWrap {
+  position: relative;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.svg:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.grid,
+.track {
+  stroke: var(--color-grid);
+  stroke-width: 1;
+}
+
+.baseline {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--color-text-muted);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-chart);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--color-chart);
+}
+
+/* Ringed in the card's surface color, so it stays legible on the line. */
+.endDot {
+  fill: var(--color-chart);
+  stroke: var(--color-surface-raised);
+  stroke-width: 2;
+  transition: r 0.1s ease;
+}
+
+.crosshair {
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-header-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltip strong {
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.rows {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.row:hover {
+  background: var(--color-chart-wash);
+}
+
+.rowLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowValue {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}
+
+.rowValue strong {
+  color: var(--color-text);
+}
+
+.tableToggle {
+  margin-top: var(--space-3);
+}
+
+.tableToggle summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.table {
+  margin-top: var(--space-2);
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--color-border);
+}

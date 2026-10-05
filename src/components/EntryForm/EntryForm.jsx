@@ -26,6 +26,8 @@ function weatherOf(entry) {
         humidity: entry.humidity,
         windSpeed: entry.windSpeed,
         locationName: entry.locationName,
+        latitude: entry.latitude,
+        longitude: entry.longitude,
       }
     : null;
 }
@@ -71,7 +73,9 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  const { weather, status, statusMessage, fetchForCity } = useWeather(start.weather);
+  const { weather, status, statusMessage, fetchForCity, fetchForCurrentLocation } = useWeather(
+    start.weather,
+  );
 
   const { stop: stopAutosave } = useDraftAutosave(
     { content, mood, date, tagsRaw, font, location, weather: weather || null },
@@ -138,6 +142,8 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
       humidity: weather?.humidity,
       windSpeed: weather?.windSpeed,
       locationName: weather?.locationName || location.trim() || undefined,
+      latitude: weather?.latitude,
+      longitude: weather?.longitude,
     });
     if (saved === false) {
       setSaving(false);
@@ -236,7 +242,9 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
         weather={weather}
         status={status}
         statusMessage={statusMessage}
-        onFetch={() => fetchForCity(location)}
+        date={date}
+        onFetch={() => fetchForCity(location, date)}
+        onUseLocation={() => fetchForCurrentLocation(date)}
       />
 
       <div className={styles.field}>
