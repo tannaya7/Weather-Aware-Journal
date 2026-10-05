@@ -9,12 +9,16 @@ export function serializeEntries(entries) {
   return JSON.stringify(entries, null, 2);
 }
 
+// Content is the only required field. Titles are derived from the first
+// line (see lib/entryTitle.js), so current entries have none — an explicit
+// title only appears on older entries and must then be a string.
 function isEntryShaped(value) {
   return (
-    value &&
+    Boolean(value) &&
     typeof value === 'object' &&
-    typeof value.title === 'string' &&
-    typeof value.content === 'string'
+    !Array.isArray(value) &&
+    typeof value.content === 'string' &&
+    (value.title === undefined || typeof value.title === 'string')
   );
 }
 
