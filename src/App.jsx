@@ -4,6 +4,7 @@ import { AnnouncerProvider } from './context/AnnouncerContext.jsx';
 import { EntriesProvider } from './context/EntriesContext.jsx';
 import { SkipLink } from './components/SkipLink/SkipLink.jsx';
 import { GlobalUndoToast } from './components/UndoToast/GlobalUndoToast.jsx';
+import { UpdatePrompt } from './components/UpdatePrompt/UpdatePrompt.jsx';
 import { AppLayout } from './components/AppLayout/AppLayout.jsx';
 import { Dashboard } from './pages/Dashboard.jsx';
 import { EntryFormPage } from './pages/EntryFormPage.jsx';
@@ -29,6 +30,7 @@ export function App() {
               </Route>
             </Routes>
             <GlobalUndoToast />
+            <UpdatePrompt />
           </HashRouter>
         </EntriesProvider>
       </AnnouncerProvider>

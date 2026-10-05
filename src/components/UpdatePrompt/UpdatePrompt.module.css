@@ -1,0 +1,48 @@
+/* Sits above the undo toast (bottom: 20px) so the two never overlap. */
+.toast {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  background: var(--color-header-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-accent);
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  z-index: 31;
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+}
+
+.refresh {
+  background: var(--color-accent);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.later {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.refresh:focus-visible,
+.later:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
