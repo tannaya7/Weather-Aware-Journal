@@ -3,3 +3,9 @@
   font-family: var(--font-reading);
   color: var(--color-text);
 }
+
+.resultCount {
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
