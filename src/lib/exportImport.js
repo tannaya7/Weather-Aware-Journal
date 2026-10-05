@@ -32,10 +32,19 @@ export function mergeImportedEntries(existingEntries, jsonText) {
     throw new Error('That file is not valid JSON.');
   }
 
+  if (parsed?.format === 'weather-journal-backup') {
+    throw new Error('This is an encrypted backup. Restore it from Export & share → Backups.');
+  }
   if (!Array.isArray(parsed)) {
     throw new Error('Expected a JSON array of journal entries.');
   }
 
+  return mergeEntries(existingEntries, parsed);
+}
+
+// Merges already-parsed entries (from a JSON export or an encrypted backup)
+// into the existing list, skipping malformed ones and ids already present.
+export function mergeEntries(existingEntries, parsed) {
   const existingIds = new Set(existingEntries.map((e) => e.id));
   const toImport = [];
   let skippedCount = 0;
