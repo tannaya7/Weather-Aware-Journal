@@ -123,7 +123,7 @@ describe('storage', () => {
         expect(Object.keys(record).sort()).toEqual(['data', 'id', 'iv']);
         expect(JSON.stringify(record)).not.toContain('ecret');
       }
-      expect(await getLockInfo()).toMatchObject({ iterations: 310000 });
+      expect(await getLockInfo()).toMatchObject({ version: 2, passcode: { iterations: 310000 }, passkey: null });
     });
 
     it('unlocks with the right passcode and decrypts entries', async () => {

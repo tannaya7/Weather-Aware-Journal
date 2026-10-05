@@ -1,4 +1,15 @@
-import { PBKDF2_ITERATIONS, decryptJson, deriveKey, encryptJson, randomBytes } from './crypto.js';
+import {
+  PBKDF2_ITERATIONS,
+  decryptJson,
+  deriveKey,
+  deriveWrappingKey,
+  encryptJson,
+  generateDataKey,
+  randomBytes,
+  unwrapDataKey,
+  wrapDataKey,
+  wrappingKeyFromSecret,
+} from './crypto.js';
 
 // Journal storage lives in IndexedDB: one record per entry, so saving only
 // writes what changed, and the quota is far larger than localStorage's ~5MB
@@ -200,36 +211,95 @@ async function rewriteAll(entries, key, lockRecord) {
   });
 }
 
-async function makeLock(passcode) {
+// Lock record, version 2: entries are encrypted with a random data key,
+// stored wrapped by the passcode (and optionally a passkey). Version 1
+// (before passkeys) encrypted entries with the passcode-derived key itself;
+// it's upgraded the first time it's unlocked.
+const LOCK_VERSION = 2;
+
+async function wrapForPasscode(dataKey, passcode) {
   const salt = randomBytes(16);
-  const key = await deriveKey(passcode, salt, PBKDF2_ITERATIONS);
-  const check = await encryptJson(key, LOCK_CHECK);
-  return { key, record: { key: LOCK_KEY, salt, iterations: PBKDF2_ITERATIONS, check } };
+  const wrappingKey = await deriveWrappingKey(passcode, salt, PBKDF2_ITERATIONS);
+  return { salt, iterations: PBKDF2_ITERATIONS, wrapped: await wrapDataKey(dataKey, wrappingKey) };
 }
 
-// Turns the lock on (or changes the passcode) and returns the new key.
+async function writeLockRecord(record) {
+  await transact([META], 'readwrite', ({ meta }) => meta.put(record));
+}
+
+// Turns the lock on: a new data key encrypts every entry. Returns the key.
 export async function setPasscode(passcode, entries) {
-  const { key, record } = await makeLock(passcode);
-  await rewriteAll(entries, key, record);
-  return key;
+  const dataKey = await generateDataKey();
+  const record = {
+    key: LOCK_KEY,
+    version: LOCK_VERSION,
+    passcode: await wrapForPasscode(dataKey, passcode),
+    passkey: null,
+  };
+  await rewriteAll(entries, dataKey, record);
+  return dataKey;
+}
+
+// Changes the passcode by re-wrapping the data key: entries aren't touched,
+// and a passkey keeps working.
+export async function changePasscode(dataKey, newPasscode) {
+  const lock = await getLockInfo();
+  await writeLockRecord({ ...lock, passcode: await wrapForPasscode(dataKey, newPasscode) });
 }
 
 export async function removePasscode(entries) {
   await rewriteAll(entries, null, null);
 }
 
-// Returns the key for `passcode`, or throws WrongPasscodeError.
+async function unlockVersion1(lock, passcode) {
+  const key = await deriveKey(passcode, lock.salt, lock.iterations);
+  try {
+    if ((await decryptJson(key, lock.check)) !== LOCK_CHECK) throw new Error();
+  } catch {
+    throw new WrongPasscodeError();
+  }
+  // Upgrade: re-encrypt under a new data key, wrapped by the same passcode.
+  const entries = await loadEntries(key);
+  return setPasscode(passcode, entries);
+}
+
+// Returns the data key for `passcode`, or throws WrongPasscodeError.
 export async function unlock(passcode) {
   const lock = await getLockInfo();
   if (!lock) throw new Error('The journal is not locked.');
+  if (lock.version !== LOCK_VERSION) return unlockVersion1(lock, passcode);
 
-  const key = await deriveKey(passcode, lock.salt, lock.iterations);
+  const { salt, iterations, wrapped } = lock.passcode;
+  const wrappingKey = await deriveWrappingKey(passcode, salt, iterations);
   try {
-    if ((await decryptJson(key, lock.check)) === LOCK_CHECK) return key;
+    return await unwrapDataKey(wrapped, wrappingKey);
   } catch {
-    // Wrong key: AES-GCM authentication fails.
+    throw new WrongPasscodeError();
   }
-  throw new WrongPasscodeError();
+}
+
+// --- Passkey unlock (see lib/passkey.js for the WebAuthn side) ---
+
+// Stores the data key wrapped by a passkey's PRF secret.
+export async function addPasskey(dataKey, { credentialId, prfSalt, secret }) {
+  const lock = await getLockInfo();
+  const wrapped = await wrapDataKey(dataKey, await wrappingKeyFromSecret(secret));
+  await writeLockRecord({ ...lock, passkey: { credentialId, prfSalt, wrapped } });
+}
+
+export async function removePasskey() {
+  const lock = await getLockInfo();
+  await writeLockRecord({ ...lock, passkey: null });
+}
+
+export async function unlockWithPasskeySecret(secret) {
+  const lock = await getLockInfo();
+  if (!lock?.passkey) throw new Error('No passkey is set up.');
+  try {
+    return await unwrapDataKey(lock.passkey.wrapped, await wrappingKeyFromSecret(secret));
+  } catch {
+    throw new Error("That passkey couldn't unlock the journal.");
+  }
 }
 
 // For a forgotten passcode: the only way back in is to start over.

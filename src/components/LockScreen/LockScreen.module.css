@@ -46,6 +46,12 @@
   border-color: var(--color-danger);
 }
 
+.or {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
 .error {
   margin: 0;
   color: var(--color-danger);
