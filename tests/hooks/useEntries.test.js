@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useEntries } from '../../src/hooks/useEntries.js';
 
 describe('useEntries', () => {
@@ -96,5 +96,16 @@ describe('useEntries', () => {
     expect(importResult.importedCount).toBe(1);
     expect(importResult.skippedCount).toBe(1);
     expect(result.current.entries).toHaveLength(2);
+  });
+
+  it('throws and keeps the list unchanged when saving fails', () => {
+    const { result } = renderHook(() => useEntries());
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+
+    expect(() => result.current.addEntry({ content: 'Too big' })).toThrow(/out of storage space/);
+    expect(result.current.entries).toHaveLength(0);
+    spy.mockRestore();
   });
 });

@@ -52,4 +52,14 @@ describe('ImageGallery', () => {
     renderGallery(entries);
     expect(entries.map((e) => e.id)).toEqual([1, 2]);
   });
+
+  it('uses the first of several photos and shows how many more there are', () => {
+    renderGallery([
+      { id: 1, content: 'Hike', images: ['data:first', 'data:second', 'data:third'], date: '2026-01-01T10:00:00' },
+    ]);
+
+    expect(document.querySelector('img')).toHaveAttribute('src', 'data:first');
+    expect(screen.getByText('+2')).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAccessibleName('Read entry: Hike (3 photos)');
+  });
 });
