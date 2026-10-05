@@ -9,6 +9,7 @@ import {
   loadDraft,
   loadEntries,
   removePasscode,
+  rescueDraft,
   saveDraft,
   saveEntries,
   setPasscode,
@@ -185,6 +186,28 @@ describe('storage', () => {
 
       expect(JSON.stringify(await rawRecords('meta'))).not.toContain('Private');
       expect(await loadDraft('new', key)).toEqual({ content: 'Private draft' });
+    });
+
+    it('recovers a rescue copy written as the tab closed, and moves it into IndexedDB', async () => {
+      rescueDraft('new', { content: 'Typed right before closing' });
+
+      expect(await loadDraft('new')).toEqual({ content: 'Typed right before closing' });
+      expect(localStorage.getItem('weatherJournalDraft:new')).toBeNull();
+      expect(await loadDraft('new')).toEqual({ content: 'Typed right before closing' });
+    });
+
+    it('never keeps plain-text rescue copies once a passcode is set', async () => {
+      rescueDraft('new', { content: 'Plain copy' });
+      const key = await setPasscode('pass', []);
+
+      expect(localStorage.getItem('weatherJournalDraft:new')).toBeNull();
+      expect(await loadDraft('new', key)).toBeNull();
+    });
+
+    it('clearing a draft clears its rescue copy too', async () => {
+      rescueDraft('new', { content: 'Gone' });
+      await clearDraft('new');
+      expect(localStorage.getItem('weatherJournalDraft:new')).toBeNull();
     });
 
     it('drops drafts when the lock changes, so none stay unencrypted', async () => {

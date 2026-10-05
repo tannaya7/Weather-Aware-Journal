@@ -53,5 +53,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './tests/setup.js',
+    // Browser tests (Playwright) live in e2e/ and run separately.
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
   },
 });

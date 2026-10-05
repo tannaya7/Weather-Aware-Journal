@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-const DEFAULT_DELAY_MS = 800;
+const DEFAULT_DELAY_MS = 500;
 
-// Debounced autosave for the entry form. Calls onSave(values) shortly after
-// the values stop changing, or onSave(null) when they're back to `baseline`
-// (nothing worth keeping). A pending save is flushed right away when the tab
-// is hidden or closed, or the form unmounts, so the last few keystrokes
-// aren't lost. Call stop() once the entry is saved for real.
+// Debounced autosave for the entry form. Calls onSave(values, { urgent })
+// shortly after the values stop changing, or onSave(null) when they're back
+// to `baseline` (nothing worth keeping). A pending save is flushed right
+// away, with urgent: true, when the tab is hidden or closed or the form
+// unmounts, so the last few keystrokes aren't lost. Call stop() once the
+// entry is saved for real.
 export function useDraftAutosave(values, baseline, onSave, delay = DEFAULT_DELAY_MS) {
   const key = JSON.stringify(values);
   const baselineKey = JSON.stringify(baseline);
@@ -21,13 +22,13 @@ export function useDraftAutosave(values, baseline, onSave, delay = DEFAULT_DELAY
     onSaveRef.current = onSave;
   });
 
-  const flush = useCallback(() => {
+  const flush = useCallback((urgent) => {
     clearTimeout(timerRef.current);
     timerRef.current = null;
     if (pendingRef.current === undefined || stoppedRef.current) return;
     const value = pendingRef.current;
     pendingRef.current = undefined;
-    onSaveRef.current(value);
+    onSaveRef.current(value, { urgent });
   }, []);
 
   useEffect(() => {
@@ -35,19 +36,22 @@ export function useDraftAutosave(values, baseline, onSave, delay = DEFAULT_DELAY
     lastKeyRef.current = key;
     pendingRef.current = key === baselineKey ? null : JSON.parse(key);
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(flush, delay);
+    timerRef.current = setTimeout(() => flush(false), delay);
   }, [key, baselineKey, delay, flush]);
 
   useEffect(() => {
     function handleVisibility() {
-      if (document.visibilityState === 'hidden') flush();
+      if (document.visibilityState === 'hidden') flush(true);
+    }
+    function handlePageHide() {
+      flush(true);
     }
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', flush);
+    window.addEventListener('pagehide', handlePageHide);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', flush);
-      flush();
+      window.removeEventListener('pagehide', handlePageHide);
+      flush(true);
     };
   }, [flush]);
 

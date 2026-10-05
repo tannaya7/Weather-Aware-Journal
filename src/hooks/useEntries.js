@@ -7,6 +7,7 @@ import {
   loadEntries,
   removePasscode,
   requestPersistentStorage,
+  rescueDraft,
   saveDraft as saveStoredDraft,
   saveEntries,
   setPasscode,
@@ -199,8 +200,13 @@ export function useEntries() {
   // --- Drafts (encrypted alongside entries when the lock is on) ---
 
   const loadDraft = useCallback((draftId) => loadStoredDraft(draftId, keyRef.current), []);
+  // `urgent`: the page is closing or the form is going away, so also keep a
+  // synchronous rescue copy (unlocked journals only; see storage.js).
   const saveDraft = useCallback(
-    (draftId, value) => enqueue(() => saveStoredDraft(draftId, value, keyRef.current)),
+    (draftId, value, { urgent = false } = {}) => {
+      if (urgent && !keyRef.current) rescueDraft(draftId, value);
+      return enqueue(() => saveStoredDraft(draftId, value, keyRef.current));
+    },
     [enqueue],
   );
   const clearDraft = useCallback((draftId) => enqueue(() => clearStoredDraft(draftId)), [enqueue]);

@@ -13,6 +13,8 @@ const leaflet = vi.hoisted(() => {
     }),
     fitBounds: vi.fn((...args) => state.views.push(['fitBounds', ...args])),
     remove: vi.fn(),
+    stop: vi.fn(),
+    off: vi.fn(),
   };
   const layer = {
     addTo: () => layer,
