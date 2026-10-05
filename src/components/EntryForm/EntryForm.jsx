@@ -5,6 +5,7 @@ import { useWeather } from '../../hooks/useWeather.js';
 import { useDraftAutosave } from '../../hooks/useDraftAutosave.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 import { WritingPrompt } from '../WritingPrompt/WritingPrompt.jsx';
+import { DictationButton } from '../DictationButton/DictationButton.jsx';
 import { MOODS } from '../../lib/moods.js';
 import { readImageFile } from '../../lib/imageUpload.js';
 import { MAX_PHOTOS, getEntryImages } from '../../lib/entryImages.js';
@@ -154,6 +155,18 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
     announce(isEdit ? 'Journal entry updated successfully.' : 'Journal entry saved.', 'assertive');
   }
 
+  // Dictated phrases are added at the end: on the current line after a
+  // space, or right on a fresh line (e.g. under a writing prompt).
+  function handleDictatedText(text) {
+    if (!text) return;
+    setContent((current) => {
+      if (!current.trim()) return text;
+      if (current.endsWith('\n')) return current + text;
+      return `${current.replace(/[ \t]+$/, '')} ${text}`;
+    });
+    setContentError(false);
+  }
+
   // The prompt becomes the entry's first line (and so its title), with the
   // cursor left on a fresh line below it.
   function handleUsePrompt(prompt) {
@@ -181,6 +194,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
         </div>
       )}
       {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
+      <DictationButton onText={handleDictatedText} />
       <label className="sr-only" htmlFor="contentInput">
         What&apos;s on your mind?
       </label>

@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/calendar', label: 'Calendar', emoji: '📅', end: false },
   { to: '/insights', label: 'Insights', emoji: '📈', end: false },
   { to: '/map', label: 'Map', emoji: '🗺️', end: false },
+  { to: '/export', label: 'Export', emoji: '📤', end: false },
   { to: '/contact', label: 'Contact', emoji: '✉️', end: false },
   { to: '/settings', label: 'Settings', emoji: '⚙️', end: false },
 ];
