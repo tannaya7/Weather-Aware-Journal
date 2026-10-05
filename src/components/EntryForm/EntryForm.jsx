@@ -5,6 +5,7 @@ import { useWeather } from '../../hooks/useWeather.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 import { MOODS } from '../../lib/moods.js';
 import { readImageFile } from '../../lib/imageUpload.js';
+import { MAX_PHOTOS, getEntryImages } from '../../lib/entryImages.js';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -25,7 +26,7 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
   const [font, setFont] = useState(initialEntry?.font || 'default');
   const [location, setLocation] = useState(initialEntry?.locationName || '');
   const [contentError, setContentError] = useState(false);
-  const [image, setImage] = useState(initialEntry?.image || null);
+  const [images, setImages] = useState(() => getEntryImages(initialEntry));
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
 
@@ -43,20 +44,28 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
   const { weather, status, statusMessage, fetchForCity } = useWeather(initialWeather);
 
   async function handleImageChange(e) {
-    const file = e.target.files?.[0];
+    const files = [...(e.target.files || [])];
     e.target.value = '';
-    if (!file) return;
+    if (files.length === 0) return;
 
-    try {
-      setImage(await readImageFile(file));
-      setImageError('');
-    } catch (error) {
-      setImageError(error.message);
+    const room = MAX_PHOTOS - images.length;
+    const added = [];
+    let error = files.length > room ? `You can add up to ${MAX_PHOTOS} photos per entry.` : '';
+
+    for (const file of files.slice(0, room)) {
+      try {
+        added.push(await readImageFile(file));
+      } catch (err) {
+        error = err.message;
+      }
     }
+
+    setImages((current) => [...current, ...added].slice(0, MAX_PHOTOS));
+    setImageError(error);
   }
 
-  function handleRemoveImage() {
-    setImage(null);
+  function handleRemoveImage(index) {
+    setImages((current) => current.filter((_, i) => i !== index));
     setImageError('');
   }
 
@@ -77,13 +86,14 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    onSubmit({
+    const saved = onSubmit({
       content: trimmedContent,
       mood,
       date: date || toDatetimeLocal(),
       tags,
       font,
-      image: image || undefined,
+      images: images.length ? images : undefined,
+      image: undefined, // replaced by `images`; clears it on older entries
       weatherIcon: weather?.icon,
       temperature: weather?.temperature,
       weatherType: weather?.weatherType,
@@ -91,6 +101,7 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
       windSpeed: weather?.windSpeed,
       locationName: weather?.locationName || location.trim() || undefined,
     });
+    if (saved === false) return;
 
     announce(isEdit ? 'Journal entry updated successfully.' : 'Journal entry saved.', 'assertive');
   }
@@ -177,23 +188,34 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
 
       <div className={styles.field}>
         <label className={styles.quietLabel} htmlFor="imageInput">
-          Photo <span className={styles.optional}>(optional)</span>
+          Photos <span className={styles.optional}>(optional, up to {MAX_PHOTOS})</span>
         </label>
-        {image ? (
-          <div className={styles.imagePreviewRow}>
-            <img src={image} alt="" className={styles.imagePreview} />
-            <Button type="button" small variant="secondary" onClick={handleRemoveImage}>
-              Remove photo
-            </Button>
-          </div>
-        ) : (
+        {images.length > 0 && (
+          <ul className={styles.imagePreviewList}>
+            {images.map((src, index) => (
+              <li key={index} className={styles.imagePreviewItem}>
+                <img src={src} alt="" className={styles.imagePreview} />
+                <button
+                  type="button"
+                  className={styles.removeImage}
+                  onClick={() => handleRemoveImage(index)}
+                  aria-label={`Remove photo ${index + 1}`}
+                  title="Remove photo"
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {images.length < MAX_PHOTOS && (
           <Button
             type="button"
             small
             variant="secondary"
             onClick={() => fileInputRef.current?.click()}
           >
-            Add a photo
+            {images.length ? 'Add more photos' : 'Add photos'}
           </Button>
         )}
         <input
@@ -201,6 +223,7 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
           id="imageInput"
           type="file"
           accept="image/*"
+          multiple
           className="sr-only"
           tabIndex={-1}
           onChange={handleImageChange}
