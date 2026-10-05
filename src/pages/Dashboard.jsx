@@ -7,6 +7,7 @@ import { SearchSortBar } from '../components/SearchSortBar/SearchSortBar.jsx';
 import { EntryTimeline } from '../components/EntryTimeline/EntryTimeline.jsx';
 import { Pagination } from '../components/Pagination/Pagination.jsx';
 import { MoodSummaryPanel } from '../components/MoodSummaryPanel/MoodSummaryPanel.jsx';
+import { ReminderBanner } from '../components/ReminderBanner/ReminderBanner.jsx';
 import { ExportImportControls } from '../components/ExportImportControls/ExportImportControls.jsx';
 import { MoodWeatherChart } from '../components/MoodWeatherChart/MoodWeatherChart.jsx';
 import { ImageGallery } from '../components/ImageGallery/ImageGallery.jsx';
@@ -101,6 +102,7 @@ export function Dashboard() {
       </Header>
 
       <div className="container" id="main-content" role="main">
+        <ReminderBanner entries={entries} />
         <SearchSortBar
           searchValue={searchTerm}
           onSearchChange={handleSearchChange}
