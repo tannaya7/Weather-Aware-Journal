@@ -42,15 +42,15 @@ describe('readImageFile shrinking', () => {
     return { drawImage, close };
   }
 
-  it('scales a large photo down to 1280px and re-encodes it as JPEG', async () => {
+  it('scales a large photo down to 2048px and re-encodes it as JPEG', async () => {
     const { drawImage, close } = stubBrowserImageApis({ width: 4000, height: 3000 });
 
     // Bigger than the 3MB cap, but fine because it gets shrunk.
     const result = await readImageFile(makeFile({ size: 6 * 1024 * 1024 }));
 
     expect(result).toBe('data:image/jpeg;base64,SMALL');
-    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 1280, 960);
-    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/jpeg', 0.8);
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 2048, 1536);
+    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/jpeg', 0.85);
     expect(close).toHaveBeenCalled();
   });
 

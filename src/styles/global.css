@@ -106,3 +106,29 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Full-page status while the journal opens, or if storage is unavailable. */
+.app-status {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  box-sizing: border-box;
+  text-align: center;
+  color: var(--color-text);
+  background: var(--color-bg-gradient);
+}
+
+.app-status h1 {
+  margin: 0;
+  font-family: var(--font-reading);
+  font-size: 22px;
+}
+
+.app-status p {
+  max-width: 440px;
+  color: var(--color-text-muted);
+}

@@ -1,8 +1,8 @@
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3MB — limit when a photo can't be shrunk
 const MAX_INPUT_BYTES = 20 * 1024 * 1024; // 20MB — anything bigger isn't a sensible photo
-const MAX_DIMENSION = 1280; // px on the longest side, plenty for a journal photo
-const JPEG_QUALITY = 0.8;
-const SHRINK_ABOVE_BYTES = 400 * 1024;
+const MAX_DIMENSION = 2048; // px on the longest side: sharp on any screen
+const JPEG_QUALITY = 0.85;
+const SHRINK_ABOVE_BYTES = 1024 * 1024;
 
 function readAsDataURL(blob) {
   return new Promise((resolve, reject) => {
@@ -13,8 +13,9 @@ function readAsDataURL(blob) {
   });
 }
 
-// Scales a photo down to MAX_DIMENSION and re-encodes it as JPEG, since
-// every photo is stored in localStorage (~5MB for the whole journal).
+// Scales a big photo down to MAX_DIMENSION and re-encodes it as JPEG.
+// IndexedDB has plenty of room, but a 12-megapixel original is still far
+// more than a journal needs, and keeps exports and backups smaller.
 // Returns null when the browser can't do it (or the photo is already
 // small), and the caller keeps the original.
 async function shrinkImage(file) {

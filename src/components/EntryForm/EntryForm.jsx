@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { WeatherBox } from '../WeatherBox/WeatherBox.jsx';
 import { useWeather } from '../../hooks/useWeather.js';
+import { useDraftAutosave } from '../../hooks/useDraftAutosave.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 import { WritingPrompt } from '../WritingPrompt/WritingPrompt.jsx';
 import { MOODS } from '../../lib/moods.js';
@@ -16,33 +17,67 @@ function toDatetimeLocal(value) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function EntryForm({ mode, initialEntry, onSubmit }) {
+function weatherOf(entry) {
+  return entry?.weatherIcon
+    ? {
+        icon: entry.weatherIcon,
+        temperature: entry.temperature,
+        weatherType: entry.weatherType,
+        humidity: entry.humidity,
+        windSpeed: entry.windSpeed,
+        locationName: entry.locationName,
+      }
+    : null;
+}
+
+// The form fields as a plain object: what a draft stores (photos are left
+// out, they're too big to rewrite on every keystroke).
+function formValuesOf(entry) {
+  return {
+    content: entry?.content || '',
+    mood: entry?.mood || '',
+    date: toDatetimeLocal(entry?.date),
+    tagsRaw: (entry?.tags || []).join(', '),
+    font: entry?.font || 'default',
+    location: entry?.locationName || '',
+    weather: weatherOf(entry),
+  };
+}
+
+function formatSavedAt(timestamp) {
+  return new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+// `draft` (optional) is unsaved work restored from an earlier visit; it
+// fills the form instead of initialEntry. onDraftChange receives the form's
+// values as they change (or null when there's nothing to keep), and
+// onDiscardDraft resets the form to the saved entry.
+export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, onDiscardDraft }) {
   const isEdit = mode === 'edit';
   const { announce } = useAnnouncer();
 
-  const [content, setContent] = useState(initialEntry?.content || '');
-  const [mood, setMood] = useState(initialEntry?.mood || '');
-  const [date, setDate] = useState(toDatetimeLocal(initialEntry?.date));
-  const [tagsRaw, setTagsRaw] = useState((initialEntry?.tags || []).join(', '));
-  const [font, setFont] = useState(initialEntry?.font || 'default');
-  const [location, setLocation] = useState(initialEntry?.locationName || '');
+  const [baseline] = useState(() => formValuesOf(initialEntry));
+  const start = draft || baseline;
+
+  const [content, setContent] = useState(start.content);
+  const [mood, setMood] = useState(start.mood);
+  const [date, setDate] = useState(start.date);
+  const [tagsRaw, setTagsRaw] = useState(start.tagsRaw);
+  const [font, setFont] = useState(start.font);
+  const [location, setLocation] = useState(start.location);
   const [contentError, setContentError] = useState(false);
   const [images, setImages] = useState(() => getEntryImages(initialEntry));
   const [imageError, setImageError] = useState('');
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  const initialWeather = initialEntry?.weatherIcon
-    ? {
-        icon: initialEntry.weatherIcon,
-        temperature: initialEntry.temperature,
-        weatherType: initialEntry.weatherType,
-        humidity: initialEntry.humidity,
-        windSpeed: initialEntry.windSpeed,
-        locationName: initialEntry.locationName,
-      }
-    : null;
+  const { weather, status, statusMessage, fetchForCity } = useWeather(start.weather);
 
-  const { weather, status, statusMessage, fetchForCity } = useWeather(initialWeather);
+  const { stop: stopAutosave } = useDraftAutosave(
+    { content, mood, date, tagsRaw, font, location, weather: weather || null },
+    baseline,
+    (values) => onDraftChange?.(values && { ...values, savedAt: Date.now() }),
+  );
 
   async function handleImageChange(e) {
     const files = [...(e.target.files || [])];
@@ -70,8 +105,9 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
     setImageError('');
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    if (saving) return;
 
     const trimmedContent = content.trim();
     if (!trimmedContent) {
@@ -87,7 +123,8 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const saved = onSubmit({
+    setSaving(true);
+    const saved = await onSubmit({
       content: trimmedContent,
       mood,
       date: date || toDatetimeLocal(),
@@ -102,8 +139,12 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
       windSpeed: weather?.windSpeed,
       locationName: weather?.locationName || location.trim() || undefined,
     });
-    if (saved === false) return;
+    if (saved === false) {
+      setSaving(false);
+      return;
+    }
 
+    stopAutosave();
     announce(isEdit ? 'Journal entry updated successfully.' : 'Journal entry saved.', 'assertive');
   }
 
@@ -123,6 +164,16 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
 
   return (
     <form id="entryForm" className={styles.form} noValidate onSubmit={handleSubmit}>
+      {draft && (
+        <div className={styles.draftNotice} role="status">
+          <span>
+            Restored your unsaved draft{draft.savedAt ? ` from ${formatSavedAt(draft.savedAt)}` : ''}.
+          </span>
+          <button type="button" className={styles.discardDraft} onClick={onDiscardDraft}>
+            Discard draft
+          </button>
+        </div>
+      )}
       {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
       <label className="sr-only" htmlFor="contentInput">
         What&apos;s on your mind?
@@ -277,8 +328,8 @@ export function EntryForm({ mode, initialEntry, onSubmit }) {
         </p>
       </details>
 
-      <Button type="submit" className={styles.submitBtn}>
-        {isEdit ? 'Save Changes' : 'Save Entry'}
+      <Button type="submit" className={styles.submitBtn} disabled={saving}>
+        {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Entry'}
       </Button>
     </form>
   );
