@@ -1,0 +1,103 @@
+.page {
+  max-width: 1100px;
+  padding-bottom: var(--space-6);
+}
+
+.summary {
+  margin: var(--space-4) 0 var(--space-3);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.map {
+  height: min(65vh, 560px);
+  min-height: 320px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  /* Leaflet's panes use z-index up to 1000; keep them under app toasts. */
+  position: relative;
+  z-index: 0;
+}
+
+.pinWrap {
+  background: none;
+  border: none;
+}
+
+.pin {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-chart);
+  box-shadow: var(--shadow-sm);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--color-chart);
+  color: var(--color-on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.popup {
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.popup ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.popup li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.popup li span {
+  color: #6b5c47;
+  white-space: nowrap;
+}
+
+.popup p {
+  margin: 4px 0 0;
+  color: #6b5c47;
+}
+
+.listToggle {
+  margin-top: var(--space-3);
+}
+
+.listToggle summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.placeList {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  font-size: 14px;
+  color: var(--color-text);
+}

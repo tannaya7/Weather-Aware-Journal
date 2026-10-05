@@ -4,6 +4,7 @@ import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
+import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
 import styles from './Settings.module.css';
 
 export const MIN_PASSCODE_LENGTH = 4;
@@ -172,6 +173,13 @@ export function Settings() {
           ) : (
             <EnableLockForm key="enable" onDone={handleDone} />
           )}
+        </section>
+
+        <section className={styles.card} aria-labelledby="backfill-heading">
+          <h2 id="backfill-heading" className={styles.heading}>
+            Fill in missing weather
+          </h2>
+          <WeatherBackfill />
         </section>
       </div>
     </>

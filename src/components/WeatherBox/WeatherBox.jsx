@@ -1,7 +1,21 @@
 import { Button } from '../Button/Button.jsx';
+import { isPastDate } from '../../lib/weatherApi.js';
+import { formatDateLong } from '../../lib/dateFormat.js';
 import styles from './WeatherBox.module.css';
 
-export function WeatherBox({ location, onLocationChange, weather, status, statusMessage, onFetch }) {
+export function WeatherBox({
+  location,
+  onLocationChange,
+  weather,
+  status,
+  statusMessage,
+  onFetch,
+  onUseLocation,
+  date,
+}) {
+  const past = isPastDate(date);
+  const canLocate = typeof navigator !== 'undefined' && 'geolocation' in navigator;
+
   function handleKeyDown(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -27,7 +41,9 @@ export function WeatherBox({ location, onLocationChange, weather, status, status
           onKeyDown={handleKeyDown}
         />
         <span id="locationHelp" className="sr-only">
-          Enter a city name to fetch current weather data
+          {past
+            ? `Enter a city name to look up the weather on ${formatDateLong(date)}`
+            : 'Enter a city name to fetch current weather data'}
         </span>
         <Button
           type="button"
@@ -39,7 +55,24 @@ export function WeatherBox({ location, onLocationChange, weather, status, status
         >
           {status === 'loading' ? 'Fetching…' : 'Add weather'}
         </Button>
+        {canLocate && onUseLocation && (
+          <Button
+            type="button"
+            small
+            variant="secondary"
+            aria-label="Use my current location for the weather"
+            onClick={onUseLocation}
+            disabled={status === 'loading'}
+          >
+            <span aria-hidden="true">📍</span> Use my location
+          </Button>
+        )}
       </div>
+      {past && (
+        <p className={styles.helper}>
+          Looks up the actual weather on {formatDateLong(date)}, at that time of day.
+        </p>
+      )}
 
       {weather && (
         <p className={styles.summary}>
