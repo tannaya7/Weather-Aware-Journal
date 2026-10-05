@@ -10,6 +10,7 @@ import { EntryFormPage } from './pages/EntryFormPage.jsx';
 import { EntryDetail } from './pages/EntryDetail.jsx';
 import { Calendar } from './pages/Calendar.jsx';
 import { Contact } from './pages/Contact.jsx';
+import { Settings } from './pages/Settings.jsx';
 
 export function App() {
   return (
@@ -26,6 +27,7 @@ export function App() {
                 <Route path="/entry/:id" element={<EntryDetail />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>
             <GlobalUndoToast />

@@ -1,94 +1,111 @@
-import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useEntries } from '../../src/hooks/useEntries.js';
+import { loadEntries, setPasscode } from '../../src/lib/storage.js';
+import { quotaError, seedEntries } from '../helpers/journal.jsx';
+
+async function renderReady() {
+  const hook = renderHook(() => useEntries());
+  await waitFor(() => expect(hook.result.current.status).not.toBe('loading'));
+  return hook;
+}
 
 describe('useEntries', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('starts empty when localStorage has no entries', () => {
-    const { result } = renderHook(() => useEntries());
-    expect(result.current.entries).toEqual([]);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('adds an entry and persists it to localStorage', () => {
-    const { result } = renderHook(() => useEntries());
+  it('starts loading, then is ready and empty with no saved entries', async () => {
+    const hook = renderHook(() => useEntries());
+    expect(hook.result.current.status).toBe('loading');
 
-    act(() => {
-      result.current.addEntry({ title: 'Test', content: 'Body' });
-    });
-
-    expect(result.current.entries).toHaveLength(1);
-    expect(result.current.entries[0].title).toBe('Test');
-    expect(JSON.parse(localStorage.getItem('weatherJournalEntries'))).toHaveLength(1);
+    await waitFor(() => expect(hook.result.current.status).toBe('ready'));
+    expect(hook.result.current.entries).toEqual([]);
   });
 
-  it('updates an existing entry by id', () => {
-    const { result } = renderHook(() => useEntries());
+  it('loads entries saved earlier', async () => {
+    await seedEntries([{ id: 1, content: 'Saved before' }]);
+    const { result } = await renderReady();
+    expect(result.current.entries).toEqual([{ id: 1, content: 'Saved before' }]);
+  });
+
+  it('adds an entry and persists it', async () => {
+    const { result } = await renderReady();
+
     let added;
-
-    act(() => {
-      added = result.current.addEntry({ title: 'Original', content: 'Body' });
+    await act(async () => {
+      added = await result.current.addEntry({ content: 'Body' });
     });
 
-    act(() => {
-      result.current.updateEntry(added.id, { title: 'Updated', content: 'Body' });
-    });
-
-    expect(result.current.entries[0].title).toBe('Updated');
-    expect(result.current.entries[0].id).toBe(added.id);
+    expect(result.current.entries).toEqual([added]);
+    expect(await loadEntries()).toEqual([added]);
   });
 
-  it('deletes an entry and returns the removed record', () => {
-    const { result } = renderHook(() => useEntries());
+  it('updates an existing entry by id', async () => {
+    const { result } = await renderReady();
     let added;
-
-    act(() => {
-      added = result.current.addEntry({ title: 'ToDelete', content: 'Body' });
+    await act(async () => {
+      added = await result.current.addEntry({ content: 'Original' });
+    });
+    await act(async () => {
+      await result.current.updateEntry(added.id, { content: 'Updated' });
     });
 
+    expect(result.current.entries[0]).toEqual({ id: added.id, content: 'Updated' });
+    expect((await loadEntries())[0].content).toBe('Updated');
+  });
+
+  it('deletes an entry and returns the removed record', async () => {
+    const { result } = await renderReady();
+    let added;
     let removed;
-    act(() => {
-      removed = result.current.deleteEntry(added.id);
+    await act(async () => {
+      added = await result.current.addEntry({ content: 'ToDelete' });
+    });
+    await act(async () => {
+      removed = await result.current.deleteEntry(added.id);
     });
 
-    expect(removed.title).toBe('ToDelete');
+    expect(removed.content).toBe('ToDelete');
     expect(result.current.entries).toHaveLength(0);
+    expect(await loadEntries()).toEqual([]);
   });
 
-  it('restores a deleted entry via restoreEntry', () => {
-    const { result } = renderHook(() => useEntries());
+  it('applies quick successive changes in order', async () => {
+    const { result } = await renderReady();
     let added;
-
-    act(() => {
-      added = result.current.addEntry({ title: 'Restore me', content: 'Body' });
-    });
-    act(() => {
-      result.current.deleteEntry(added.id);
-    });
-    act(() => {
-      result.current.restoreEntry(added);
+    await act(async () => {
+      added = await result.current.addEntry({ content: 'Back and forth' });
     });
 
-    expect(result.current.entries).toHaveLength(1);
-    expect(result.current.entries[0].id).toBe(added.id);
+    // Not awaited one by one: delete and restore are queued back to back.
+    await act(async () => {
+      const removal = result.current.deleteEntry(added.id);
+      const restore = result.current.restoreEntry(added);
+      await Promise.all([removal, restore]);
+    });
+
+    expect(result.current.entries).toEqual([added]);
+    expect(await loadEntries()).toEqual([added]);
   });
 
-  it('imports entries and skips duplicates by id', () => {
-    const { result } = renderHook(() => useEntries());
+  it('imports entries and skips duplicates by id', async () => {
+    const { result } = await renderReady();
     let added;
-
-    act(() => {
-      added = result.current.addEntry({ title: 'Existing', content: 'Body' });
+    await act(async () => {
+      added = await result.current.addEntry({ content: 'Existing' });
     });
 
     let importResult;
-    act(() => {
-      importResult = result.current.importEntries(
+    await act(async () => {
+      importResult = await result.current.importEntries(
         JSON.stringify([
-          { id: added.id, title: 'Dup', content: 'x' },
-          { title: 'New one', content: 'y' },
+          { id: added.id, content: 'Dup' },
+          { content: 'New one' },
         ]),
       );
     });
@@ -98,14 +115,83 @@ describe('useEntries', () => {
     expect(result.current.entries).toHaveLength(2);
   });
 
-  it('throws and keeps the list unchanged when saving fails', () => {
-    const { result } = renderHook(() => useEntries());
-    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('full', 'QuotaExceededError');
+  it('rejects and keeps the list unchanged when saving fails', async () => {
+    const { result } = await renderReady();
+    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(() => {
+      throw quotaError();
     });
 
-    expect(() => result.current.addEntry({ content: 'Too big' })).toThrow(/out of storage space/);
+    await act(async () => {
+      await expect(result.current.addEntry({ content: 'Too big' })).rejects.toThrow(
+        /out of storage space/,
+      );
+    });
     expect(result.current.entries).toHaveLength(0);
+  });
+
+  it('keeps working after a failed save', async () => {
+    const { result } = await renderReady();
+    const spy = vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementationOnce(() => {
+      throw quotaError();
+    });
+
+    await act(async () => {
+      await result.current.addEntry({ content: 'Fails' }).catch(() => {});
+    });
     spy.mockRestore();
+    await act(async () => {
+      await result.current.addEntry({ content: 'Works' });
+    });
+
+    expect(result.current.entries.map((e) => e.content)).toEqual(['Works']);
+  });
+
+  describe('passcode lock', () => {
+    it('opens locked when a passcode is set, and unlock loads the entries', async () => {
+      await setPasscode('1234', [{ id: 1, content: 'Hidden' }]);
+      const { result } = await renderReady();
+
+      expect(result.current.status).toBe('locked');
+      expect(result.current.entries).toEqual([]);
+
+      await act(async () => {
+        await result.current.unlock('1234');
+      });
+      expect(result.current.status).toBe('ready');
+      expect(result.current.entries).toEqual([{ id: 1, content: 'Hidden' }]);
+    });
+
+    it('lock() hides the entries again', async () => {
+      await setPasscode('1234', [{ id: 1, content: 'Hidden' }]);
+      const { result } = await renderReady();
+      await act(async () => {
+        await result.current.unlock('1234');
+      });
+
+      await act(async () => {
+        result.current.lock();
+      });
+
+      await waitFor(() => expect(result.current.status).toBe('locked'));
+      expect(result.current.entries).toEqual([]);
+    });
+
+    it('needs the current passcode to turn the lock off', async () => {
+      const { result } = await renderReady();
+      await act(async () => {
+        await result.current.enableLock('1234');
+      });
+      expect(result.current.lockEnabled).toBe(true);
+
+      await act(async () => {
+        await expect(result.current.disableLock('nope')).rejects.toThrow(/isn't right/);
+      });
+      expect(result.current.lockEnabled).toBe(true);
+
+      await act(async () => {
+        await result.current.disableLock('1234');
+      });
+      expect(result.current.lockEnabled).toBe(false);
+    });
   });
 });
