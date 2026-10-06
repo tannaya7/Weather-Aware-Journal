@@ -6,6 +6,8 @@ import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
 import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
+import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
+import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
 import styles from './Settings.module.css';
 
@@ -259,6 +261,20 @@ export function Settings() {
           ) : (
             <EnableLockForm key="enable" onDone={handleDone} />
           )}
+        </section>
+
+        <section className={styles.card} aria-labelledby="sync-heading">
+          <h2 id="sync-heading" className={styles.heading}>
+            Sync across devices
+          </h2>
+          <SyncSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="reminder-heading">
+          <h2 id="reminder-heading" className={styles.heading}>
+            Daily reminder
+          </h2>
+          <ReminderSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="habits-heading">

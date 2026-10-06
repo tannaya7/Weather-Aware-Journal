@@ -1,0 +1,24 @@
+name = "weather-journal-server"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Sends due daily reminders.
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Create with: npx wrangler kv namespace create JOURNAL
+# then paste the id it prints here.
+[[kv_namespaces]]
+binding = "JOURNAL"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# Comma-separated sites allowed to call this server from a browser.
+ALLOWED_ORIGINS = "https://tannaya7.github.io,http://localhost:5173,http://localhost:4173"
+# Contact for push services (required by Web Push).
+VAPID_SUBJECT = "mailto:you@example.com"
+
+# Secrets (set with `npx wrangler secret put NAME`, never committed):
+#   ANTHROPIC_API_KEY   for AI reflections
+#   VAPID_PUBLIC_KEY    from `npm run vapid-keys`
+#   VAPID_PRIVATE_JWK   from `npm run vapid-keys`
