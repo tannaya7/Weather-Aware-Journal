@@ -10,7 +10,32 @@ import { fontFamilyFor, weatherCardStyle } from '../lib/entryStyle.js';
 import { getEntryImages } from '../lib/entryImages.js';
 import { allHabits } from '../lib/habits.js';
 import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
+import { RichText } from '../components/RichText/RichText.jsx';
+import { toggleChecklistLine } from '../lib/richText.js';
+import { relatedEntries } from '../lib/search.js';
+import { formatDuration } from '../hooks/useVoiceRecorder.js';
+import { Link } from 'react-router-dom';
 import styles from './EntryDetail.module.css';
+
+function RelatedEntries({ entry, entries }) {
+  const related = relatedEntries(entry, entries);
+  if (related.length === 0) return null;
+  return (
+    <section className={styles.related} aria-labelledby="related-heading">
+      <h2 id="related-heading" className={styles.relatedHeading}>
+        Related entries
+      </h2>
+      <ul>
+        {related.map((other) => (
+          <li key={other.id}>
+            <Link to={`/entry/${other.id}`}>{getEntryTitle(other)}</Link>
+            <span>{formatDateLong(other.date)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function HabitChips({ values, habits }) {
   const shown = habits.filter((h) => values?.[h.id] !== undefined && values[h.id] !== false);
@@ -30,7 +55,7 @@ function HabitChips({ values, habits }) {
 export function EntryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getEntryById, deleteEntry, habitConfig } = useEntriesContext();
+  const { getEntryById, deleteEntry, updateEntry, habitConfig, entries } = useEntriesContext();
   const entry = getEntryById(id);
 
   if (!entry) {
@@ -118,8 +143,27 @@ export function EntryDetail() {
             </div>
           )}
 
-          <div className={styles.content}>{entry.content}</div>
+          {entry.audio?.length > 0 && (
+            <ul className={styles.memos} aria-label="Voice memos">
+              {entry.audio.map((memo, i) => (
+                <li key={memo.recordedAt || i}>
+                  {/* eslint-disable-next-line jsx-a11y/media-has-caption -- the person's own voice memo */}
+                  <audio controls src={memo.src} preload="metadata" aria-label={`Voice memo ${i + 1}`} />
+                  <span>{formatDuration(memo.duration || 0)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.content}>
+            <RichText
+              text={entry.content}
+              onToggleCheck={(line) => updateEntry(entry.id, { content: toggleChecklistLine(entry.content, line) })}
+            />
+          </div>
         </article>
+
+        <RelatedEntries entry={entry} entries={entries} />
       </div>
     </>
   );

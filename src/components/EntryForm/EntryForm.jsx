@@ -12,6 +12,8 @@ import { MAX_PHOTOS, getEntryImages } from '../../lib/entryImages.js';
 import { pickSky } from '../../lib/sky.js';
 import { cleanHabitValues } from '../../lib/habits.js';
 import { HabitFields } from '../HabitFields/HabitFields.jsx';
+import { FormatToolbar } from '../FormatToolbar/FormatToolbar.jsx';
+import { VoiceMemos } from '../VoiceMemos/VoiceMemos.jsx';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -94,6 +96,7 @@ export function EntryForm({
   const [habitValues, setHabitValues] = useState(start.habits || {});
   const [contentError, setContentError] = useState(false);
   const [images, setImages] = useState(() => getEntryImages(initialEntry));
+  const [audio, setAudio] = useState(() => initialEntry?.audio || []);
   const [imageError, setImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
@@ -161,6 +164,7 @@ export function EntryForm({
       habits: mergeHabits(initialEntry?.habits, habitValues, habits),
       font,
       images: images.length ? images : undefined,
+      audio: audio.length ? audio : undefined,
       image: undefined, // replaced by `images`; clears it on older entries
       weatherIcon: weather?.icon,
       temperature: weather?.temperature,
@@ -221,6 +225,14 @@ export function EntryForm({
       )}
       {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
       <DictationButton onText={handleDictatedText} />
+      <FormatToolbar
+        textareaId="contentInput"
+        content={content}
+        onChange={(next) => {
+          setContent(next);
+          setContentError(false);
+        }}
+      />
       <label className="sr-only" htmlFor="contentInput">
         What&apos;s on your mind?
       </label>
@@ -351,6 +363,8 @@ export function EntryForm({
           </p>
         )}
       </div>
+
+      <VoiceMemos memos={audio} onChange={setAudio} />
 
       <details className={styles.appearanceDetails}>
         <summary className={styles.quietLabel}>Customize appearance</summary>
