@@ -33,6 +33,20 @@ export function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [moodPanelOpen, setMoodPanelOpen] = useState(false);
 
+  // These read every entry, so they're built only when the entries change,
+  // not on every keystroke in search or click on a filter.
+  const summaries = useMemo(
+    () => (
+      <>
+        <StreakCard entries={entries} />
+        <OnThisDay entries={entries} />
+        <MoodWeatherChart entries={entries} />
+        <ImageGallery entries={entries} />
+      </>
+    ),
+    [entries],
+  );
+
   const parsedQuery = useMemo(() => parseQuery(searchTerm), [searchTerm]);
   const highlight = useMemo(() => highlightTerms(parsedQuery), [parsedQuery]);
 
@@ -128,10 +142,7 @@ export function Dashboard() {
         />
         <FilterChips options={filterOptions} filters={filters} onChange={handleFiltersChange} />
 
-        <StreakCard entries={entries} />
-        <OnThisDay entries={entries} />
-        <MoodWeatherChart entries={entries} />
-        <ImageGallery entries={entries} />
+        {summaries}
 
         <h2 className={styles.heading} id="entries-heading">
           Your Journal

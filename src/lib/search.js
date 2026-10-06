@@ -65,7 +65,20 @@ function dateBound(value, end) {
   return end ? new Date(y, m - 1, d + 1) : new Date(y, m - 1, d);
 }
 
+// Searching re-reads every entry on each keystroke, so the lowercased text
+// is cached per entry object. Entries are never mutated (a change makes a
+// new object), so a cached value can't go stale.
+const textCache = new WeakMap();
+
 export function searchableText(entry) {
+  const cached = textCache.get(entry);
+  if (cached !== undefined) return cached;
+  const text = buildSearchableText(entry);
+  textCache.set(entry, text);
+  return text;
+}
+
+function buildSearchableText(entry) {
   return [getEntryTitle(entry), stripMarkdown(entry.content), entry.mood, entry.weatherType, entry.locationName, ...(entry.tags || [])]
     .filter(Boolean)
     .join(' ')
