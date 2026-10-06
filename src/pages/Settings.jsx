@@ -5,6 +5,7 @@ import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
+import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
 import styles from './Settings.module.css';
 
@@ -258,6 +259,13 @@ export function Settings() {
           ) : (
             <EnableLockForm key="enable" onDone={handleDone} />
           )}
+        </section>
+
+        <section className={styles.card} aria-labelledby="habits-heading">
+          <h2 id="habits-heading" className={styles.heading}>
+            Habits
+          </h2>
+          <HabitSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="backfill-heading">

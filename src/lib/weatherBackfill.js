@@ -1,4 +1,5 @@
 import { fetchWeatherAt, geocodeCity } from './weatherApi.js';
+import { fetchSkyAt, pickSky } from './sky.js';
 
 // Entries that have a date but no weather yet.
 export function entriesMissingWeather(entries) {
@@ -11,7 +12,15 @@ export function entriesMissingWeather(entries) {
 // arrives, so progress is kept even if the page is left halfway.
 export async function backfillWeather(
   entries,
-  { fallbackCity = '', onResult, onProgress, signal, fetchAt = fetchWeatherAt, geocode = geocodeCity } = {},
+  {
+    fallbackCity = '',
+    onResult,
+    onProgress,
+    signal,
+    fetchAt = fetchWeatherAt,
+    geocode = geocodeCity,
+    fetchSky = fetchSkyAt,
+  } = {},
 ) {
   const places = new Map(); // name -> Promise<place>, one lookup per place
   const placeFor = (name) => {
@@ -39,7 +48,8 @@ export async function backfillWeather(
         place = await placeFor(name);
       }
 
-      const weather = await fetchAt({ latitude: place.latitude, longitude: place.longitude, date: entry.date });
+      const at = { latitude: place.latitude, longitude: place.longitude, date: entry.date };
+      const [weather, sky] = await Promise.all([fetchAt(at), fetchSky(at).catch(() => ({}))]);
       await onResult?.(entry.id, {
         weatherIcon: weather.icon,
         temperature: weather.temperature,
@@ -49,6 +59,7 @@ export async function backfillWeather(
         locationName: entry.locationName || place.locationName,
         latitude: place.latitude,
         longitude: place.longitude,
+        ...pickSky(sky),
       });
       summary.updated += 1;
     } catch (error) {

@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { backfillWeather, entriesMissingWeather } from '../../src/lib/weatherBackfill.js';
 
+// Sun and air data are fetched alongside; keep unit tests off the network.
+vi.mock('../../src/lib/sky.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  fetchSkyAt: vi.fn(async () => ({ sunrise: '06:04', sunset: '18:14', daylightHours: 12.2 })),
+}));
+
 const WEATHER = {
   icon: '🌧️',
   temperature: '12°C',
@@ -48,6 +54,9 @@ describe('backfillWeather', () => {
       locationName: 'Oslo',
       latitude: 1,
       longitude: 2,
+      sunrise: '06:04',
+      sunset: '18:14',
+      daylightHours: 12.2,
     });
   });
 
