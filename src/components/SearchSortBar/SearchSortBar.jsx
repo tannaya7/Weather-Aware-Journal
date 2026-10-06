@@ -35,12 +35,18 @@ export function SearchSortBar({
 
   return (
     <div className={styles.bar} role="search">
+      <span id="searchHelp" className="sr-only">
+        Search by words or an exact phrase in quotes. Leave out a word with a minus sign. Filter with
+        mood:, weather:, tag:, before: and after: a date, or has:photo, has:voice, has:weather.
+      </span>
       <input
         ref={searchInputRef}
         type="text"
         className={styles.search}
-        placeholder="Search entries..."
+        placeholder='Search… try mood:sad or "rainy day"'
         aria-label="Search journal entries"
+        aria-describedby="searchHelp"
+        title='Words, "exact phrases", -leave-out, mood:, weather:, tag:, before:2025-06, after:2025, has:photo, has:voice'
         value={localSearch}
         onChange={handleChange}
       />

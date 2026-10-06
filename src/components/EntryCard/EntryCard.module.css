@@ -138,3 +138,21 @@
     align-items: baseline;
   }
 }
+
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}

@@ -3,7 +3,7 @@ import { EmptyState } from '../EmptyState/EmptyState.jsx';
 import { groupEntriesByMonth } from '../../lib/groupByMonth.js';
 import styles from './EntryTimeline.module.css';
 
-export function EntryTimeline({ entries, hasFilters, onEdit, onDelete }) {
+export function EntryTimeline({ entries, hasFilters, onEdit, onDelete, highlight }) {
   if (entries.length === 0) {
     return <EmptyState hasFilters={hasFilters} />;
   }
@@ -17,7 +17,7 @@ export function EntryTimeline({ entries, hasFilters, onEdit, onDelete }) {
           <h3 className={styles.monthLabel}>{group.label}</h3>
           <ul className={styles.list}>
             {group.entries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} onEdit={onEdit} onDelete={onDelete} />
+              <EntryCard key={entry.id} entry={entry} onEdit={onEdit} onDelete={onDelete} highlight={highlight} />
             ))}
           </ul>
         </section>
