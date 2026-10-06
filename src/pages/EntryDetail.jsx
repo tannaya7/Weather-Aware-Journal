@@ -134,11 +134,11 @@ export function EntryDetail() {
             </div>
           )}
 
-          {images.length === 1 && <img src={images[0]} alt="" className={styles.image} />}
+          {images.length === 1 && <img src={images[0]} alt="" className={styles.image} decoding="async" />}
           {images.length > 1 && (
             <div className={styles.imageGrid}>
               {images.map((src, index) => (
-                <img key={index} src={src} alt="" className={styles.gridImage} />
+                <img key={index} src={src} alt="" className={styles.gridImage} loading="lazy" decoding="async" />
               ))}
             </div>
           )}

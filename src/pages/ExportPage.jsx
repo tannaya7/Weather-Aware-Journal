@@ -190,7 +190,9 @@ function PrintSection({ entries }) {
         In the print window, choose <strong>Save as PDF</strong> as the printer. The PDF isn&apos;t
         encrypted, even if your journal has a passcode.
       </p>
-      <div className={styles.printPreview}>
+      {/* Scrollable, so keyboard users need to be able to focus it to scroll. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region */}
+      <div className={styles.printPreview} role="region" aria-label="Print preview" tabIndex={0}>
         <PrintJournal entries={chosen} title={title} includePhotos={includePhotos} />
       </div>
     </>
