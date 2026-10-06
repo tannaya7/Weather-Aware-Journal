@@ -11,6 +11,7 @@ import { getEntryImages } from '../lib/entryImages.js';
 import { allHabits } from '../lib/habits.js';
 import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
 import { RichText } from '../components/RichText/RichText.jsx';
+import { Reflection } from '../components/Reflection/Reflection.jsx';
 import { toggleChecklistLine } from '../lib/richText.js';
 import { relatedEntries } from '../lib/search.js';
 import { formatDuration } from '../hooks/useVoiceRecorder.js';
@@ -162,6 +163,10 @@ export function EntryDetail() {
             />
           </div>
         </article>
+
+        <section className={styles.related} aria-label="Reflect">
+          <Reflection scope="entry" entry={entry} />
+        </section>
 
         <RelatedEntries entry={entry} entries={entries} />
       </div>

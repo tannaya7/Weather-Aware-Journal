@@ -55,7 +55,8 @@ describe('useEntries', () => {
       await result.current.updateEntry(added.id, { content: 'Updated' });
     });
 
-    expect(result.current.entries[0]).toEqual({ id: added.id, content: 'Updated' });
+    expect(result.current.entries[0]).toMatchObject({ id: added.id, content: 'Updated' });
+    expect(result.current.entries[0].updatedAt).toBeGreaterThanOrEqual(added.updatedAt);
     expect((await loadEntries())[0].content).toBe('Updated');
   });
 
@@ -89,8 +90,9 @@ describe('useEntries', () => {
       await Promise.all([removal, restore]);
     });
 
-    expect(result.current.entries).toEqual([added]);
-    expect(await loadEntries()).toEqual([added]);
+    // Restoring counts as a change (fresh updatedAt), so sync won't treat it as deleted.
+    expect(result.current.entries).toMatchObject([{ id: added.id, content: added.content }]);
+    expect(await loadEntries()).toMatchObject([{ id: added.id, content: added.content }]);
   });
 
   it('imports entries and skips duplicates by id', async () => {
