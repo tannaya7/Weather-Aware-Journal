@@ -392,6 +392,34 @@ export async function clearDraft(draftId) {
   await transact([META], 'readwrite', ({ meta }) => meta.delete(`draft:${draftId}`));
 }
 
+// Small app settings (e.g. which habits to track) live in the meta store
+// too, encrypted like drafts when the lock is on. Changing the lock clears
+// the meta store, so useEntries saves settings again right after.
+export async function loadSetting(name, key = null) {
+  const db = await openDb();
+  let record;
+  try {
+    const tx = db.transaction(META, 'readonly');
+    record = await promisify(tx.objectStore(META).get(`setting:${name}`));
+  } finally {
+    db.close();
+  }
+  if (!record) return null;
+  if (!key) return record.value ?? null;
+  try {
+    return await decryptJson(key, record);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveSetting(name, value, key = null) {
+  const record = key
+    ? { key: `setting:${name}`, ...(await encryptJson(key, value)) }
+    : { key: `setting:${name}`, value };
+  await transact([META], 'readwrite', ({ meta }) => meta.put(record));
+}
+
 // Asks the browser not to clear the journal when the device runs low on
 // space. Best effort: some browsers decide on their own.
 export function requestPersistentStorage() {

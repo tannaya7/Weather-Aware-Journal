@@ -9,7 +9,9 @@ import {
   loadEntries,
   removePasskey,
   removePasscode,
+  loadSetting,
   requestPersistentStorage,
+  saveSetting,
   rescueDraft,
   saveDraft as saveStoredDraft,
   saveEntries,
@@ -20,6 +22,7 @@ import {
 import { mergeEntries, mergeImportedEntries } from '../lib/exportImport.js';
 import { readEncryptedBackup } from '../lib/backup.js';
 import { getPasskeySecret, registerPasskey } from '../lib/passkey.js';
+import { DEFAULT_HABIT_CONFIG } from '../lib/habits.js';
 
 // Owns the journal entries array and every change to it, persisted to
 // IndexedDB (lib/storage.js). Loading is async, so `status` moves from
@@ -35,6 +38,8 @@ export function useEntries() {
   const [status, setStatus] = useState('loading');
   const [lockEnabled, setLockEnabled] = useState(false);
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
+  const [habitConfig, setHabitConfigState] = useState(DEFAULT_HABIT_CONFIG);
+  const habitConfigRef = useRef(DEFAULT_HABIT_CONFIG);
   const [loadError, setLoadError] = useState(null);
 
   const entriesRef = useRef([]);
@@ -58,9 +63,13 @@ export function useEntries() {
           setStatus('locked');
           return;
         }
-        const loaded = await loadEntries();
+        const [loaded, habits] = await Promise.all([loadEntries(), loadSetting('habits')]);
         if (cancelled) return;
         applyEntries(loaded);
+        if (habits) {
+          habitConfigRef.current = habits;
+          setHabitConfigState(habits);
+        }
         setStatus('ready');
         requestPersistentStorage();
       } catch (error) {
@@ -156,9 +165,13 @@ export function useEntries() {
 
   const openWithKey = useCallback(
     async (key) => {
-      const loaded = await loadEntries(key);
+      const [loaded, habits] = await Promise.all([loadEntries(key), loadSetting('habits', key)]);
       keyRef.current = key;
       applyEntries(loaded);
+      if (habits) {
+        habitConfigRef.current = habits;
+        setHabitConfigState(habits);
+      }
       setStatus('ready');
       requestPersistentStorage();
     },
@@ -190,6 +203,7 @@ export function useEntries() {
     (passcode) =>
       enqueue(async () => {
         keyRef.current = await setPasscode(passcode, entriesRef.current);
+        await saveSetting('habits', habitConfigRef.current, keyRef.current);
         setLockEnabled(true);
       }),
     [enqueue],
@@ -232,6 +246,7 @@ export function useEntries() {
         await unlockStorage(currentPasscode);
         await removePasscode(entriesRef.current);
         keyRef.current = null;
+        await saveSetting('habits', habitConfigRef.current, null);
         setLockEnabled(false);
         setPasskeyEnabled(false);
       }),
@@ -244,11 +259,25 @@ export function useEntries() {
         await eraseJournal();
         keyRef.current = null;
         applyEntries([]);
+        habitConfigRef.current = DEFAULT_HABIT_CONFIG;
+        setHabitConfigState(DEFAULT_HABIT_CONFIG);
         setLockEnabled(false);
         setPasskeyEnabled(false);
         setStatus('ready');
       }),
     [enqueue, applyEntries],
+  );
+
+  // Which habits to track (Settings). Saved with the journal, encrypted when
+  // the lock is on, because custom habit names can be personal.
+  const setHabitConfig = useCallback(
+    (config) =>
+      enqueue(async () => {
+        await saveSetting('habits', config, keyRef.current);
+        habitConfigRef.current = config;
+        setHabitConfigState(config);
+      }),
+    [enqueue],
   );
 
   // --- Drafts (encrypted alongside entries when the lock is on) ---
@@ -276,6 +305,8 @@ export function useEntries() {
     getEntryById,
     importEntries,
     importBackup,
+    habitConfig,
+    setHabitConfig,
     lockEnabled,
     passkeyEnabled,
     unlock,

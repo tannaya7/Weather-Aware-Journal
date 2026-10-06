@@ -1,6 +1,8 @@
 // Weather utilities: fetch live weather data for a city via the free Open-Meteo API.
 // No API key required.
 
+import { fetchSkyAt } from './sky.js';
+
 const GEO_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const WEATHER_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 // Reanalysis data back to 1940, for entries about older days.
@@ -155,20 +157,29 @@ export async function fetchWeatherAt({ latitude, longitude, date, now = new Date
 
 // Weather for a city by name — current, or historical when `date` is past.
 // Includes the coordinates, which the map uses.
+// Sun, daylight, UV, and air quality alongside the weather; never fails.
+function skyOrNothing(latitude, longitude, date) {
+  return fetchSkyAt({ latitude, longitude, date }).catch(() => ({}));
+}
+
 export async function fetchWeatherForCity(cityName, date) {
   const place = await geocodeCity(cityName);
-  const weather = await fetchWeatherAt({ latitude: place.latitude, longitude: place.longitude, date });
-  return { ...weather, ...place };
+  const [weather, sky] = await Promise.all([
+    fetchWeatherAt({ latitude: place.latitude, longitude: place.longitude, date }),
+    skyOrNothing(place.latitude, place.longitude, date),
+  ]);
+  return { ...weather, ...sky, ...place };
 }
 
 // Weather where you are (from the browser's location), with a place name
 // when one can be found.
 export async function fetchWeatherForCoords(latitude, longitude, date) {
-  const [weather, locationName] = await Promise.all([
+  const [weather, sky, locationName] = await Promise.all([
     fetchWeatherAt({ latitude, longitude, date }),
+    skyOrNothing(latitude, longitude, date),
     reverseGeocode(latitude, longitude),
   ]);
-  return { ...weather, latitude, longitude, locationName: locationName || 'Current location' };
+  return { ...weather, ...sky, latitude, longitude, locationName: locationName || 'Current location' };
 }
 
 export function getCurrentPosition() {
