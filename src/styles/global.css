@@ -157,3 +157,8 @@ textarea {
     width: 100%;
   }
 }
+
+.page-loading {
+  padding-top: var(--space-6);
+  color: var(--color-text-muted);
+}
