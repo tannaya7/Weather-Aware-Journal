@@ -20,6 +20,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # The server's tests (worker/) run in the same suite and need its SDK.
+      - run: npm ci --prefix worker
       - run: npm run lint
       - run: npm test
       - run: npm run build

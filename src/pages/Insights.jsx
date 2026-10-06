@@ -5,6 +5,7 @@ import { MoodTrendChart } from '../components/Charts/MoodTrendChart.jsx';
 import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.jsx';
 import { MoodDotRows } from '../components/Charts/MoodDotRows.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
+import { Reflection } from '../components/Reflection/Reflection.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { moodByFactor, moodByTemperature, weeklyMoodTrend, withMoonFraction } from '../lib/insights.js';
 import { enabledHabits, habitMoodEffects } from '../lib/habits.js';
@@ -96,6 +97,14 @@ export function Insights() {
             </div>
 
             <OnThisDay entries={entries} />
+
+            <section className={styles.card} aria-labelledby="reflect-heading">
+              <h2 id="reflect-heading" className={styles.heading}>
+                Reflections
+              </h2>
+              <p className={styles.sub}>A short reflection on your week, written by AI</p>
+              <Reflection scope="week" />
+            </section>
 
             <section className={styles.card} aria-labelledby="trend-heading">
               <div className={styles.cardHead}>

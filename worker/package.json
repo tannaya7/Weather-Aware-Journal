@@ -1,0 +1,14 @@
+{
+  "name": "weather-journal-server",
+  "private": true,
+  "type": "module",
+  "description": "Optional server for Weather Journal: encrypted sync, AI reflections, and push reminders (Cloudflare Worker).",
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "vapid-keys": "node scripts/generate-vapid-keys.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  }
+}

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useEntries } from '../hooks/useEntries.js';
+import { useSync } from '../hooks/useSync.js';
 import { useAnnouncer } from './AnnouncerContext.jsx';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { LockScreen } from '../components/LockScreen/LockScreen.jsx';
@@ -27,6 +28,7 @@ function StatusScreen({ title, children }) {
 // a short status, and with a passcode set it shows the lock screen.
 export function EntriesProvider({ children }) {
   const base = useEntries();
+  const sync = useSync(base, base.status === 'ready');
   const { announce } = useAnnouncer();
   const [pendingUndo, setPendingUndo] = useState(null);
   const { status, lockEnabled, lock } = base;
@@ -102,7 +104,7 @@ export function EntriesProvider({ children }) {
     );
   }
 
-  const value = { ...base, deleteEntry, pendingUndo, undoDelete, dismissUndo };
+  const value = { ...base, deleteEntry, pendingUndo, undoDelete, dismissUndo, sync };
 
   return <EntriesContext.Provider value={value}>{children}</EntriesContext.Provider>;
 }

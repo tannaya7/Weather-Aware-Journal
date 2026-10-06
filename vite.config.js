@@ -34,6 +34,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Shows daily reminder notifications (see public/sw-push.js).
+        importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,css,html,svg}'],
         runtimeCaching: [
           {
