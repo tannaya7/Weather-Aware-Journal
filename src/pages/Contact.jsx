@@ -1,11 +1,13 @@
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import styles from './Contact.module.css';
 
 export function Contact() {
+  const { t } = useI18n();
   return (
     <>
-      <Header title="Contact Us">
+      <Header title={t('page.contact')}>
         <ThemeToggle />
       </Header>
 

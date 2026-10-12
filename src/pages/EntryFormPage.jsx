@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { EntryForm } from '../components/EntryForm/EntryForm.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
@@ -9,6 +10,7 @@ import { enabledHabits } from '../lib/habits.js';
 import styles from './EntryFormPage.module.css';
 
 export function EntryFormPage() {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const startPrompt = useLocation().state?.prompt;
@@ -81,15 +83,15 @@ export function EntryFormPage() {
 
   return (
     <>
-      <Header title={isEdit ? 'Edit Entry' : 'Write'}>
+      <Header title={isEdit ? t('page.edit') : t('page.write')}>
         <ThemeToggle />
         <Button
           type="button"
           variant="secondary"
           onClick={handleCancel}
-          aria-label="Cancel and return to dashboard"
+          aria-label={t('form.cancelLabel')}
         >
-          Cancel
+          {t('form.cancel')}
         </Button>
       </Header>
 

@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
+import { I18nProvider } from './i18n/I18nContext.jsx';
 import { AnnouncerProvider } from './context/AnnouncerContext.jsx';
 import { EntriesProvider } from './context/EntriesContext.jsx';
 import { SemanticProvider } from './context/SemanticContext.jsx';
@@ -27,32 +28,34 @@ const Settings = lazyPage(() => import('./pages/Settings.jsx'), 'Settings');
 
 export function App() {
   return (
-    <ThemeProvider>
-      <AnnouncerProvider>
-        <EntriesProvider>
-          <SemanticProvider>
-            <HashRouter>
-              <SkipLink />
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/new" element={<EntryFormPage />} />
-                  <Route path="/edit/:id" element={<EntryFormPage />} />
-                  <Route path="/entry/:id" element={<EntryDetail />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/insights" element={<Insights />} />
-                  <Route path="/map" element={<MapPage />} />
-                  <Route path="/export" element={<ExportPage />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
-              </Routes>
-              <GlobalUndoToast />
-              <UpdatePrompt />
-            </HashRouter>
-          </SemanticProvider>
-        </EntriesProvider>
-      </AnnouncerProvider>
-    </ThemeProvider>
+    <I18nProvider>
+      <ThemeProvider>
+        <AnnouncerProvider>
+          <EntriesProvider>
+            <SemanticProvider>
+              <HashRouter>
+                <SkipLink />
+                <Routes>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/new" element={<EntryFormPage />} />
+                    <Route path="/edit/:id" element={<EntryFormPage />} />
+                    <Route path="/entry/:id" element={<EntryDetail />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/insights" element={<Insights />} />
+                    <Route path="/map" element={<MapPage />} />
+                    <Route path="/export" element={<ExportPage />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Route>
+                </Routes>
+                <GlobalUndoToast />
+                <UpdatePrompt />
+              </HashRouter>
+            </SemanticProvider>
+          </EntriesProvider>
+        </AnnouncerProvider>
+      </ThemeProvider>
+    </I18nProvider>
   );
 }

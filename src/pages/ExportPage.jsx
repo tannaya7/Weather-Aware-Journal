@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useReviewImage } from '../hooks/useReviewImage.js';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { PrintJournal } from '../components/PrintJournal/PrintJournal.jsx';
@@ -181,6 +182,7 @@ function PrintSection({ entries, job, onJobDone }) {
 }
 
 export function ExportPage() {
+  const { t } = useI18n();
   const { entries, habitConfig } = useEntriesContext();
   const [job, setJob] = useState(null);
   const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
@@ -188,7 +190,7 @@ export function ExportPage() {
 
   return (
     <>
-      <Header title="Export & share" icon="📤">
+      <Header title={t('page.export')} icon="📤">
         <ThemeToggle />
       </Header>
 

@@ -1,24 +1,34 @@
 import { useRef } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { buildExportFilename, serializeEntries } from '../../lib/exportImport.js';
-import { readFileAsText } from '../../lib/backup.js';
+import { parseImportFiles, toMarkdown } from '../../lib/importers.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 
 export function ExportImportControls({ entries, onImport }) {
   const fileInputRef = useRef(null);
   const { announce } = useAnnouncer();
 
-  function handleExport() {
-    const blob = new Blob([serializeEntries(entries)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+  function download(text, type, fileName) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = buildExportFilename();
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  // Everything, exactly as stored (it imports back with nothing lost).
+  function handleExport() {
+    download(serializeEntries(entries), 'application/json', buildExportFilename());
     announce(`Exported ${entries.length} entries.`);
+  }
+
+  // Readable anywhere: one Markdown file, each entry with its details on top.
+  function handleExportMarkdown() {
+    download(toMarkdown(entries), 'text/markdown', buildExportFilename().replace(/\.json$/, '.md'));
+    announce(`Exported ${entries.length} entries as Markdown.`);
   }
 
   function handleImportClick() {
@@ -26,16 +36,20 @@ export function ExportImportControls({ entries, onImport }) {
   }
 
   async function handleFileChange(e) {
-    const file = e.target.files?.[0];
+    const files = [...(e.target.files || [])];
     e.target.value = '';
-    if (!file) return;
+    if (files.length === 0) return;
 
     try {
-      const text = await readFileAsText(file);
-      const result = await onImport(text);
+      const { format, entries: found } = await parseImportFiles(files);
+      if (found.length === 0) {
+        announce('No entries found in that file.', 'assertive');
+        return;
+      }
+      const result = await onImport(found);
       announce(
-        `Imported ${result.importedCount} entr${result.importedCount === 1 ? 'y' : 'ies'}.${
-          result.skippedCount ? ` Skipped ${result.skippedCount}.` : ''
+        `Imported ${result.importedCount} entr${result.importedCount === 1 ? 'y' : 'ies'} from ${format}.${
+          result.skippedCount ? ` Skipped ${result.skippedCount} already here or unreadable.` : ''
         }`,
         'assertive',
       );
@@ -49,13 +63,23 @@ export function ExportImportControls({ entries, onImport }) {
       <Button type="button" variant="secondary" small onClick={handleExport} aria-label="Export all entries as JSON">
         Export
       </Button>
-      <Button type="button" variant="secondary" small onClick={handleImportClick} aria-label="Import entries from a JSON file">
+      <Button type="button" variant="secondary" small onClick={handleExportMarkdown} aria-label="Export all entries as Markdown">
+        Export .md
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        small
+        onClick={handleImportClick}
+        aria-label="Import entries from this app, Day One, or Markdown files"
+      >
         Import
       </Button>
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json"
+        accept=".json,.zip,.md,.markdown,.txt,application/json,application/zip,text/markdown,text/plain"
+        multiple
         className="sr-only"
         aria-hidden="true"
         tabIndex={-1}

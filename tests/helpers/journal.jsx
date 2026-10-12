@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../src/context/ThemeContext.jsx';
+import { I18nProvider } from '../../src/i18n/I18nContext.jsx';
 import { AnnouncerProvider } from '../../src/context/AnnouncerContext.jsx';
 import { EntriesProvider } from '../../src/context/EntriesContext.jsx';
 import { SemanticProvider } from '../../src/context/SemanticContext.jsx';
@@ -17,17 +18,19 @@ export async function waitForJournal() {
 
 // Renders `ui` inside the app's providers and a router, and waits until the
 // journal has finished loading from storage.
-export async function renderWithJournal(ui, { initialEntries = ['/'] } = {}) {
+export async function renderWithJournal(ui, { initialEntries = ['/'], language = 'en' } = {}) {
   const view = render(
-    <ThemeProvider>
-      <AnnouncerProvider>
-        <EntriesProvider>
-          <SemanticProvider>
-            <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
-          </SemanticProvider>
-        </EntriesProvider>
-      </AnnouncerProvider>
-    </ThemeProvider>,
+    <I18nProvider initial={language}>
+      <ThemeProvider>
+        <AnnouncerProvider>
+          <EntriesProvider>
+            <SemanticProvider>
+              <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+            </SemanticProvider>
+          </EntriesProvider>
+        </AnnouncerProvider>
+      </ThemeProvider>
+    </I18nProvider>,
   );
   await waitForJournal();
   return view;

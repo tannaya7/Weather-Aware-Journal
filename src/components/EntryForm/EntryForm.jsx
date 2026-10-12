@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { WeatherBox } from '../WeatherBox/WeatherBox.jsx';
 import { useWeather } from '../../hooks/useWeather.js';
@@ -14,6 +14,7 @@ import { cleanHabitValues } from '../../lib/habits.js';
 import { HabitFields } from '../HabitFields/HabitFields.jsx';
 import { FormatToolbar } from '../FormatToolbar/FormatToolbar.jsx';
 import { VoiceMemos } from '../VoiceMemos/VoiceMemos.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -83,6 +84,7 @@ export function EntryForm({
 }) {
   const isEdit = mode === 'edit';
   const { announce } = useAnnouncer();
+  const { t } = useI18n();
 
   const [baseline] = useState(() => formValuesOf(initialEntry));
   const start = draft || baseline;
@@ -100,6 +102,21 @@ export function EntryForm({
   const [imageError, setImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
+
+  // Ctrl+Enter (or Cmd+Enter) saves from anywhere in the form.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return undefined;
+    function onKey(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        form.requestSubmit?.();
+      }
+    }
+    form.addEventListener('keydown', onKey);
+    return () => form.removeEventListener('keydown', onKey);
+  }, []);
 
   const { weather, status, statusMessage, fetchForCity, fetchForCurrentLocation } = useWeather(
     start.weather,
@@ -144,7 +161,7 @@ export function EntryForm({
     const trimmedContent = content.trim();
     if (!trimmedContent) {
       setContentError(true);
-      announce('Form validation failed. Write something before saving.', 'assertive');
+      announce(t('form.contentError'), 'assertive');
       document.getElementById('contentInput')?.focus();
       return;
     }
@@ -212,7 +229,7 @@ export function EntryForm({
   }
 
   return (
-    <form id="entryForm" className={styles.form} noValidate onSubmit={handleSubmit}>
+    <form ref={formRef} id="entryForm" className={styles.form} noValidate onSubmit={handleSubmit}>
       {draft && (
         <div className={styles.draftNotice} role="status">
           <span>
@@ -234,24 +251,28 @@ export function EntryForm({
         }}
       />
       <label className="sr-only" htmlFor="contentInput">
-        What&apos;s on your mind?
+        {t('form.content')}
       </label>
       <textarea
         id="contentInput"
         className={styles.contentField}
-        placeholder="Dear journal…"
+        placeholder={t('form.placeholder')}
         aria-required="true"
         aria-invalid={contentError}
+        aria-describedby={contentError ? 'contentError' : undefined}
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
-      <div className="sr-only" aria-live="assertive" aria-atomic="true">
-        {contentError ? 'Write something before saving.' : ''}
-      </div>
+      {/* Shown next to the field and tied to it, so it is read with the field too. */}
+      {contentError && (
+        <p id="contentError" className={styles.fieldError}>
+          {t('form.contentError')}
+        </p>
+      )}
 
       <fieldset className={styles.moodFieldset}>
         <legend className={styles.quietLabel}>
-          Mood <span className={styles.optional}>(optional)</span>
+          {t('form.mood')} <span className={styles.optional}>{t('form.optional')}</span>
         </legend>
         <div className={styles.moodChips}>
           {MOODS.map((m) => (
@@ -269,7 +290,7 @@ export function EntryForm({
           ))}
           {mood && (
             <button type="button" className={styles.clearMood} onClick={() => setMood('')}>
-              Clear
+              {t('form.clearMood')}
             </button>
           )}
         </div>
@@ -277,7 +298,7 @@ export function EntryForm({
 
       <div className={styles.metaRow}>
         <label className={styles.quietLabel} htmlFor="dateInput">
-          Date &amp; time
+          {t('form.date')}
         </label>
         <input
           id="dateInput"
@@ -303,7 +324,7 @@ export function EntryForm({
 
       <div className={styles.field}>
         <label className={styles.quietLabel} htmlFor="tagsInput">
-          Tags <span className={styles.optional}>(optional, comma-separated)</span>
+          {t('form.tags')} <span className={styles.optional}>{t('form.tagsHint')}</span>
         </label>
         <input
           id="tagsInput"
@@ -317,7 +338,7 @@ export function EntryForm({
 
       <div className={styles.field}>
         <label className={styles.quietLabel} htmlFor="imageInput">
-          Photos <span className={styles.optional}>(optional, up to {MAX_PHOTOS})</span>
+          {t('form.photos')} <span className={styles.optional}>{t('form.photosHint', { max: MAX_PHOTOS })}</span>
         </label>
         {images.length > 0 && (
           <ul className={styles.imagePreviewList}>
@@ -392,8 +413,17 @@ export function EntryForm({
         </p>
       </details>
 
-      <Button type="submit" className={styles.submitBtn} disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Entry'}
+      <p id="saveShortcut" className="sr-only">
+        {t('form.saveShortcut')}
+      </p>
+      <Button
+        type="submit"
+        className={styles.submitBtn}
+        disabled={saving}
+        aria-keyshortcuts="Control+Enter Meta+Enter"
+        aria-describedby="saveShortcut"
+      >
+        {saving ? t('form.saving') : isEdit ? t('form.saveChanges') : t('form.save')}
       </Button>
     </form>
   );

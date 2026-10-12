@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
@@ -65,6 +66,7 @@ function HabitChips({ values, habits }) {
 }
 
 export function EntryDetail() {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const { getEntryById, deleteEntry, updateEntry, habitConfig, entries } = useEntriesContext();
@@ -98,7 +100,7 @@ export function EntryDetail() {
 
   return (
     <>
-      <Header title="Journal Entry">
+      <Header title={t('page.entry')}>
         <ThemeToggle />
         <Button variant="secondary" onClick={() => navigate('/')} aria-label="Back to journal timeline">
           ← Back

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { MoodTrendChart } from '../components/Charts/MoodTrendChart.jsx';
 import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.jsx';
@@ -40,6 +41,7 @@ function StatTile({ label, value, detail }) {
 }
 
 export function Insights() {
+  const { t } = useI18n();
   const { entries, habitConfig } = useEntriesContext();
   const [weeks, setWeeks] = useState(26);
 
@@ -69,7 +71,7 @@ export function Insights() {
 
   return (
     <>
-      <Header title="Insights" icon="📈">
+      <Header title={t('page.insights')} icon="📈">
         <ThemeToggle />
       </Header>
 

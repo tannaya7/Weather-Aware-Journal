@@ -198,6 +198,16 @@ export function useEntries() {
     [persist],
   );
 
+  // Entries already read from a file (lib/importers.js), merged the same way.
+  const importEntryList = useCallback(
+    (list) =>
+      persist((prev) => {
+        const result = mergeEntries(prev, list);
+        return { next: result.entries, result };
+      }),
+    [persist],
+  );
+
   // Restores an encrypted backup file (lib/backup.js), merging its entries
   // the same way as a JSON import.
   const importBackup = useCallback(
@@ -367,6 +377,7 @@ export function useEntries() {
     restoreEntry,
     getEntryById,
     importEntries,
+    importEntryList,
     importBackup,
     habitConfig,
     setHabitConfig,

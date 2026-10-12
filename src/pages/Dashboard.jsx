@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { SearchSortBar } from '../components/SearchSortBar/SearchSortBar.jsx';
@@ -25,7 +26,8 @@ import styles from './Dashboard.module.css';
 const ITEMS_PER_PAGE = 6;
 
 export function Dashboard() {
-  const { entries, deleteEntry, importEntries } = useEntriesContext();
+  const { t } = useI18n();
+  const { entries, deleteEntry, importEntryList } = useEntriesContext();
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,11 +165,11 @@ export function Dashboard() {
 
   return (
     <>
-      <Header title="Weather Journal" icon="🌥️">
+      <Header title={t('page.journal')} icon="🌥️">
         <ThemeToggle />
-        <ExportImportControls entries={entries} onImport={importEntries} />
-        <Button type="button" onClick={() => navigate('/new')} aria-label="Write a new journal entry">
-          + Write
+        <ExportImportControls entries={entries} onImport={importEntryList} />
+        <Button type="button" onClick={() => navigate('/new')} aria-label={t('dashboard.writeLabel')}>
+          {t('dashboard.write')}
         </Button>
       </Header>
 
@@ -194,11 +196,11 @@ export function Dashboard() {
         {summaries}
 
         <h2 className={styles.heading} id="entries-heading">
-          Your Journal
+          {t('dashboard.yourJournal')}
         </h2>
         {isFiltered && (
           <p className={styles.resultCount} role="status">
-            {visibleEntries.length} {visibleEntries.length === 1 ? 'entry' : 'entries'}
+            {t('dashboard.count', { count: visibleEntries.length })}
             {meaningScores && ', closest in meaning first'}
             {meaningActive && meaning.state === 'loading' && '. Searching by meaning…'}
             {meaningActive && meaning.state === 'error' && '. Could not search by meaning, showing word matches.'}

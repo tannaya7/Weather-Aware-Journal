@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
@@ -9,6 +10,7 @@ import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
 import { GoalSettings } from '../components/GoalSettings/GoalSettings.jsx';
 import { SemanticSettings } from '../components/SemanticSettings/SemanticSettings.jsx';
 import { StorageSettings } from '../components/StorageSettings/StorageSettings.jsx';
+import { LanguageSettings } from '../components/LanguageSettings/LanguageSettings.jsx';
 import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
 import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
@@ -220,6 +222,7 @@ function PasskeySection({ onDone }) {
 }
 
 export function Settings() {
+  const { t } = useI18n();
   const { lockEnabled } = useEntriesContext();
   const { announce } = useAnnouncer();
   const [message, setMessage] = useState('');
@@ -231,7 +234,7 @@ export function Settings() {
 
   return (
     <>
-      <Header title="Settings" icon="⚙️">
+      <Header title={t('page.settings')} icon="⚙️">
         <ThemeToggle />
       </Header>
 
@@ -299,6 +302,13 @@ export function Settings() {
             Search by meaning
           </h2>
           <SemanticSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="language-heading">
+          <h2 id="language-heading" className={styles.heading}>
+            {t('settings.language')}
+          </h2>
+          <LanguageSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="storage-heading">

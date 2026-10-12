@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './SearchSortBar.module.css';
 
 export function SearchSortBar({
@@ -14,6 +15,7 @@ export function SearchSortBar({
   semanticMode = false,
   onToggleSemantic,
 }) {
+  const { t } = useI18n();
   const [localSearch, setLocalSearch] = useState(searchValue);
   const debounceRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -39,15 +41,14 @@ export function SearchSortBar({
   return (
     <div className={styles.bar} role="search">
       <span id="searchHelp" className="sr-only">
-        Search by words or an exact phrase in quotes. Leave out a word with a minus sign. Filter with
-        mood:, weather:, tag:, before: and after: a date, or has:photo, has:voice, has:weather.
+        {t('search.help')}
       </span>
       <input
         ref={searchInputRef}
         type="text"
         className={styles.search}
-        placeholder='Search… try mood:sad or "rainy day"'
-        aria-label="Search journal entries"
+        placeholder={t('search.placeholder')}
+        aria-label={t('search.label')}
         aria-describedby="searchHelp"
         title='Words, "exact phrases", -leave-out, mood:, weather:, tag:, before:2025-06, after:2025, has:photo, has:voice'
         value={localSearch}
@@ -56,22 +57,22 @@ export function SearchSortBar({
 
       <select
         className={styles.select}
-        aria-label="Sort entries"
+        aria-label={t('search.sort')}
         value={sortOrder}
         onChange={(e) => onSortChange(e.target.value)}
       >
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
+        <option value="newest">{t('search.newest')}</option>
+        <option value="oldest">{t('search.oldest')}</option>
       </select>
 
       <button
         type="button"
         className={styles.toggleBtn}
         aria-pressed={dateFilterMode === 'today'}
-        aria-label="Filter to show only today's entries"
+        aria-label={t('search.todayLabel')}
         onClick={onToggleToday}
       >
-        Today
+        {t('search.today')}
       </button>
 
       {semanticAvailable && (
@@ -79,11 +80,11 @@ export function SearchSortBar({
           type="button"
           className={styles.toggleBtn}
           aria-pressed={semanticMode}
-          aria-label="Search by meaning"
+          aria-label={t('search.meaningLabel')}
           title="Find entries by what they mean, not just the words"
           onClick={onToggleSemantic}
         >
-          By meaning
+          {t('search.meaning')}
         </button>
       )}
 
@@ -92,10 +93,10 @@ export function SearchSortBar({
         type="button"
         className={styles.toggleBtn}
         aria-expanded={moodPanelOpen}
-        aria-label="View mood summary"
+        aria-label={t('search.moodLabel')}
         onClick={onToggleMoodPanel}
       >
-        Mood tracker
+        {t('search.mood')}
       </button>
     </div>
   );

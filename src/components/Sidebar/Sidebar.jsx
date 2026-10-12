@@ -1,15 +1,16 @@
 import { NavLink } from 'react-router-dom';
 import { useEntriesContext } from '../../context/EntriesContext.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Home', emoji: '🏠', end: true },
-  { to: '/calendar', label: 'Calendar', emoji: '📅', end: false },
-  { to: '/insights', label: 'Insights', emoji: '📈', end: false },
-  { to: '/map', label: 'Map', emoji: '🗺️', end: false },
-  { to: '/export', label: 'Export', emoji: '📤', end: false },
-  { to: '/contact', label: 'Contact', emoji: '✉️', end: false },
-  { to: '/settings', label: 'Settings', emoji: '⚙️', end: false },
+  { to: '/', label: 'nav.home', emoji: '🏠', end: true },
+  { to: '/calendar', label: 'nav.calendar', emoji: '📅', end: false },
+  { to: '/insights', label: 'nav.insights', emoji: '📈', end: false },
+  { to: '/map', label: 'nav.map', emoji: '🗺️', end: false },
+  { to: '/export', label: 'nav.export', emoji: '📤', end: false },
+  { to: '/contact', label: 'nav.contact', emoji: '✉️', end: false },
+  { to: '/settings', label: 'nav.settings', emoji: '⚙️', end: false },
 ];
 
 function linkClass({ isActive }) {
@@ -18,9 +19,10 @@ function linkClass({ isActive }) {
 
 export function Sidebar() {
   const { lockEnabled, lock } = useEntriesContext();
+  const { t } = useI18n();
 
   return (
-    <nav className={styles.sidebar} aria-label="Main navigation">
+    <nav className={styles.sidebar} aria-label={t('nav.label')}>
       <NavLink to="/" className={styles.logo} aria-hidden="true" tabIndex={-1}>
         🌥️
       </NavLink>
@@ -30,7 +32,7 @@ export function Sidebar() {
             <span className={styles.emoji} aria-hidden="true">
               {item.emoji}
             </span>
-            {item.label}
+            {t(item.label)}
           </NavLink>
         ))}
         {lockEnabled && (
@@ -38,7 +40,7 @@ export function Sidebar() {
             <span className={styles.emoji} aria-hidden="true">
               🔒
             </span>
-            Lock
+            {t('nav.lock')}
           </button>
         )}
       </div>
