@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AnnouncerProvider } from './context/AnnouncerContext.jsx';
 import { EntriesProvider } from './context/EntriesContext.jsx';
+import { SemanticProvider } from './context/SemanticContext.jsx';
 import { SkipLink } from './components/SkipLink/SkipLink.jsx';
 import { GlobalUndoToast } from './components/UndoToast/GlobalUndoToast.jsx';
 import { UpdatePrompt } from './components/UpdatePrompt/UpdatePrompt.jsx';
@@ -29,25 +30,27 @@ export function App() {
     <ThemeProvider>
       <AnnouncerProvider>
         <EntriesProvider>
-          <HashRouter>
-            <SkipLink />
-            <Routes>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/new" element={<EntryFormPage />} />
-                <Route path="/edit/:id" element={<EntryFormPage />} />
-                <Route path="/entry/:id" element={<EntryDetail />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/insights" element={<Insights />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/export" element={<ExportPage />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
-            </Routes>
-            <GlobalUndoToast />
-            <UpdatePrompt />
-          </HashRouter>
+          <SemanticProvider>
+            <HashRouter>
+              <SkipLink />
+              <Routes>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/new" element={<EntryFormPage />} />
+                  <Route path="/edit/:id" element={<EntryFormPage />} />
+                  <Route path="/entry/:id" element={<EntryDetail />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/map" element={<MapPage />} />
+                  <Route path="/export" element={<ExportPage />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
+              </Routes>
+              <GlobalUndoToast />
+              <UpdatePrompt />
+            </HashRouter>
+          </SemanticProvider>
         </EntriesProvider>
       </AnnouncerProvider>
     </ThemeProvider>

@@ -40,7 +40,19 @@ export default defineConfig({
         // Shows daily reminder notifications (see public/sw-push.js).
         importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,css,html,svg}'],
+        // The search-by-meaning engine is large and only needed by people
+        // who turn that on, so it is cached when first used, not at install.
+        globIgnores: ['**/transformers.web-*.js'],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => /\/assets\/(transformers\.web|ort-wasm)[^/]*\.(js|wasm)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'semantic-engine',
+              expiration: { maxEntries: 6 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/(geocoding-api\.open-meteo\.com|api\.open-meteo\.com)\/.*/,
             handler: 'NetworkFirst',

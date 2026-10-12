@@ -10,6 +10,9 @@ export function SearchSortBar({
   onToggleToday,
   moodPanelOpen,
   onToggleMoodPanel,
+  semanticAvailable = false,
+  semanticMode = false,
+  onToggleSemantic,
 }) {
   const [localSearch, setLocalSearch] = useState(searchValue);
   const debounceRef = useRef(null);
@@ -70,6 +73,19 @@ export function SearchSortBar({
       >
         Today
       </button>
+
+      {semanticAvailable && (
+        <button
+          type="button"
+          className={styles.toggleBtn}
+          aria-pressed={semanticMode}
+          aria-label="Search by meaning"
+          title="Find entries by what they mean, not just the words"
+          onClick={onToggleSemantic}
+        >
+          By meaning
+        </button>
+      )}
 
       <button
         id="moodTrackerBtn"

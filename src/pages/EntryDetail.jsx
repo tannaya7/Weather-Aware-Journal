@@ -3,6 +3,7 @@ import { Header } from '../components/Header/Header.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
+import { useSemantic } from '../context/SemanticContext.jsx';
 import { formatDateLong } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { emojiForMood } from '../lib/moods.js';
@@ -18,8 +19,16 @@ import { formatDuration } from '../hooks/useVoiceRecorder.js';
 import { Link } from 'react-router-dom';
 import styles from './EntryDetail.module.css';
 
+const MAX_RELATED = 5;
+
+// Entries alike in meaning (when search by meaning is on) first, then the
+// ones that share tags, words, mood, or weather.
 function RelatedEntries({ entry, entries }) {
-  const related = relatedEntries(entry, entries);
+  const semantic = useSemantic();
+  const byId = new Map(entries.map((e) => [String(e.id), e]));
+  const similar = semantic.enabled ? semantic.similarTo(entry.id).map((hit) => byId.get(hit.id)).filter(Boolean) : [];
+  const seen = new Set(similar.map((e) => String(e.id)));
+  const related = [...similar, ...relatedEntries(entry, entries).filter((e) => !seen.has(String(e.id)))].slice(0, MAX_RELATED);
   if (related.length === 0) return null;
   return (
     <section className={styles.related} aria-labelledby="related-heading">

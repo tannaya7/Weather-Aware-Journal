@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../src/context/ThemeContext.jsx';
 import { AnnouncerProvider } from '../../src/context/AnnouncerContext.jsx';
 import { EntriesProvider } from '../../src/context/EntriesContext.jsx';
+import { SemanticProvider } from '../../src/context/SemanticContext.jsx';
 import { saveEntries } from '../../src/lib/storage.js';
 
 // Puts entries straight into the (fake) IndexedDB before the app loads.
@@ -21,7 +22,9 @@ export async function renderWithJournal(ui, { initialEntries = ['/'] } = {}) {
     <ThemeProvider>
       <AnnouncerProvider>
         <EntriesProvider>
-          <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+          <SemanticProvider>
+            <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+          </SemanticProvider>
         </EntriesProvider>
       </AnnouncerProvider>
     </ThemeProvider>,
