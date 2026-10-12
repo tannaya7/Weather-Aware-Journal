@@ -6,6 +6,7 @@ import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
 import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
+import { GoalSettings } from '../components/GoalSettings/GoalSettings.jsx';
 import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
 import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
@@ -282,6 +283,13 @@ export function Settings() {
             Habits
           </h2>
           <HabitSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="goals-heading">
+          <h2 id="goals-heading" className={styles.heading}>
+            Weekly goals
+          </h2>
+          <GoalSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="backfill-heading">

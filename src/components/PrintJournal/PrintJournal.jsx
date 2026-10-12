@@ -7,7 +7,8 @@ import styles from './PrintJournal.module.css';
 
 // The journal laid out for paper / PDF: a cover, then every entry oldest
 // first, each kept on one page where it fits.
-export function PrintJournal({ entries, title, includePhotos }) {
+// `intro` (optional) is shown on its own page after the cover.
+export function PrintJournal({ entries, title, includePhotos, intro }) {
   const ordered = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
@@ -21,6 +22,8 @@ export function PrintJournal({ entries, title, includePhotos }) {
             ` · ${formatDateLong(ordered[0].date)} – ${formatDateLong(ordered[ordered.length - 1].date)}`}
         </p>
       </header>
+
+      {intro && <section className={styles.intro}>{intro}</section>}
 
       {ordered.map((entry) => {
         const images = includePhotos ? getEntryImages(entry) : [];

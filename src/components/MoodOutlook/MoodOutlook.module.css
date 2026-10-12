@@ -1,0 +1,89 @@
+.card {
+  margin-top: var(--space-4);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-reading);
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.sectionHeading {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.empty,
+.sub {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.trend,
+.tomorrow {
+  margin: 0 0 var(--space-2);
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 96px 1fr 110px;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.dayName {
+  color: var(--color-text);
+}
+
+.track {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.dayValue {
+  color: var(--color-text);
+}
+
+.count,
+.dayNone {
+  color: var(--color-text-muted);
+}
+
+.dayNone {
+  grid-column: 2 / 4;
+}
+
+@media (max-width: 480px) {
+  .day {
+    grid-template-columns: 80px 1fr 90px;
+  }
+}

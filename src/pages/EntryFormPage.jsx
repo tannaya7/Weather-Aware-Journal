@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
 import { EntryForm } from '../components/EntryForm/EntryForm.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
@@ -11,6 +11,7 @@ import styles from './EntryFormPage.module.css';
 export function EntryFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const startPrompt = useLocation().state?.prompt;
   const { addEntry, updateEntry, getEntryById, loadDraft, saveDraft, clearDraft, habitConfig } =
     useEntriesContext();
   const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
@@ -104,7 +105,7 @@ export function EntryFormPage() {
           <EntryForm
             key={`${draftId}-${formKey}`}
             mode={isEdit ? 'edit' : 'create'}
-            initialEntry={existingEntry}
+            initialEntry={existingEntry || (startPrompt ? { content: `${startPrompt}\n\n` } : null)}
             draft={draft}
             onDraftChange={handleDraftChange}
             onDiscardDraft={handleDiscardDraft}

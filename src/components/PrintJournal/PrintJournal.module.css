@@ -103,3 +103,16 @@
     padding-top: 30vh;
   }
 }
+
+.intro {
+  padding: 24px 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 24px;
+}
+
+@media print {
+  .intro {
+    break-after: page;
+    border-bottom: none;
+  }
+}

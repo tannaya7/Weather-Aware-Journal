@@ -13,6 +13,7 @@ import { ExportImportControls } from '../components/ExportImportControls/ExportI
 import { MoodWeatherChart } from '../components/MoodWeatherChart/MoodWeatherChart.jsx';
 import { ImageGallery } from '../components/ImageGallery/ImageGallery.jsx';
 import { StreakCard } from '../components/StreakCard/StreakCard.jsx';
+import { ForecastPrompt } from '../components/ForecastPrompt/ForecastPrompt.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { isSameDay } from '../lib/dateFormat.js';
@@ -39,6 +40,7 @@ export function Dashboard() {
     () => (
       <>
         <StreakCard entries={entries} />
+        <ForecastPrompt entries={entries} />
         <OnThisDay entries={entries} />
         <MoodWeatherChart entries={entries} />
         <ImageGallery entries={entries} />

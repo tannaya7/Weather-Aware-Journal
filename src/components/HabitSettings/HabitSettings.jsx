@@ -30,6 +30,7 @@ export function HabitSettings() {
     }
     const habit = makeCustomHabit(trimmed.slice(0, MAX_NAME), emoji.trim() || '✅');
     setHabitConfig({
+      ...habitConfig,
       custom: [...habitConfig.custom, habit],
       enabled: [...habitConfig.enabled, habit.id],
     });
@@ -39,9 +40,12 @@ export function HabitSettings() {
   }
 
   function remove(id) {
+    const goals = Object.fromEntries(Object.entries(habitConfig.goals || {}).filter(([key]) => key !== id));
     setHabitConfig({
+      ...habitConfig,
       custom: habitConfig.custom.filter((h) => h.id !== id),
       enabled: habitConfig.enabled.filter((h) => h !== id),
+      goals,
     });
   }
 

@@ -95,7 +95,7 @@ export const REVIEW_SIZE = { width: 1080, height: 1350 }; // 4:5, fits social fe
 
 // Fixed colors (the image looks the same whatever theme you're in): the
 // app's dark "candlelit" palette, with the chart amber validated for it.
-const C = {
+export const REVIEW_COLORS = {
   bgTop: '#2a1e13',
   bgBottom: '#140d08',
   panel: 'rgba(255, 240, 220, 0.06)',
@@ -106,17 +106,17 @@ const C = {
   track: 'rgba(255, 240, 220, 0.08)',
 };
 
-const FONT = "'Poppins', 'Segoe UI', system-ui, sans-serif";
-const SERIF = "'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
+export const REVIEW_FONT = "'Poppins', 'Segoe UI', system-ui, sans-serif";
+export const REVIEW_SERIF = "'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
 
-function rounded(ctx, x, y, w, h, r) {
+export function drawRounded(ctx, x, y, w, h, r) {
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
   else ctx.rect(x, y, w, h);
   ctx.fill();
 }
 
-function text(ctx, value, x, y, { size = 32, color = C.text, weight = 400, align = 'left', family = FONT } = {}) {
+export function drawText(ctx, value, x, y, { size = 32, color = REVIEW_COLORS.text, weight = 400, align = 'left', family = REVIEW_FONT } = {}) {
   ctx.font = `${weight} ${size}px ${family}`;
   ctx.fillStyle = color;
   ctx.textAlign = align;
@@ -131,14 +131,14 @@ export function drawYearReview(ctx, summary) {
   const pad = 80;
 
   const bg = ctx.createLinearGradient(0, 0, 0, height);
-  bg.addColorStop(0, C.bgTop);
-  bg.addColorStop(1, C.bgBottom);
+  bg.addColorStop(0, REVIEW_COLORS.bgTop);
+  bg.addColorStop(1, REVIEW_COLORS.bgBottom);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  text(ctx, '🌥️  Weather Journal', pad, 120, { size: 34, color: C.muted, weight: 600 });
-  text(ctx, `My ${summary.year}`, pad, 230, { size: 96, weight: 700, family: SERIF });
-  text(ctx, 'in review', pad, 300, { size: 48, color: C.accent, family: SERIF });
+  drawText(ctx, '🌥️  Weather Journal', pad, 120, { size: 34, color: REVIEW_COLORS.muted, weight: 600 });
+  drawText(ctx, `My ${summary.year}`, pad, 230, { size: 96, weight: 700, family: REVIEW_SERIF });
+  drawText(ctx, 'in review', pad, 300, { size: 48, color: REVIEW_COLORS.accent, family: REVIEW_SERIF });
 
   // Four stat panels in a 2x2 grid.
   const stats = [
@@ -153,18 +153,18 @@ export function drawYearReview(ctx, summary) {
   stats.forEach(([value, label], i) => {
     const x = pad + (i % 2) * (panelW + gap);
     const y = 360 + Math.floor(i / 2) * (panelH + gap);
-    ctx.fillStyle = C.panel;
-    rounded(ctx, x, y, panelW, panelH, 24);
-    text(ctx, value, x + 32, y + 78, { size: 56, weight: 700 });
-    text(ctx, label, x + 32, y + 120, { size: 28, color: C.muted });
+    ctx.fillStyle = REVIEW_COLORS.panel;
+    drawRounded(ctx, x, y, panelW, panelH, 24);
+    drawText(ctx, value, x + 32, y + 78, { size: 56, weight: 700 });
+    drawText(ctx, label, x + 32, y + 120, { size: 28, color: REVIEW_COLORS.muted });
   });
 
   // Highlights.
   let y = 760;
   const line = (icon, label, value) => {
-    text(ctx, icon, pad, y, { size: 40 });
-    text(ctx, label, pad + 64, y, { size: 30, color: C.muted });
-    text(ctx, value, width - pad, y, { size: 32, weight: 600, align: 'right' });
+    drawText(ctx, icon, pad, y, { size: 40 });
+    drawText(ctx, label, pad + 64, y, { size: 30, color: REVIEW_COLORS.muted });
+    drawText(ctx, value, width - pad, y, { size: 32, weight: 600, align: 'right' });
     y += 64;
   };
   if (summary.topMood) line(summary.topMood.emoji, 'Most common mood', summary.topMood.mood);
@@ -182,13 +182,13 @@ export function drawYearReview(ctx, summary) {
   const rowH = (height - barsTop - 70) / summary.moodCounts.length;
   summary.moodCounts.forEach((m, i) => {
     const rowY = barsTop + i * rowH;
-    text(ctx, m.emoji, pad, rowY + rowH / 2 + 12, { size: 30 });
-    ctx.fillStyle = C.track;
-    rounded(ctx, barX, rowY + rowH / 2 - 8, barMax, 16, 8);
+    drawText(ctx, m.emoji, pad, rowY + rowH / 2 + 12, { size: 30 });
+    ctx.fillStyle = REVIEW_COLORS.track;
+    drawRounded(ctx, barX, rowY + rowH / 2 - 8, barMax, 16, 8);
     if (m.count > 0) {
-      ctx.fillStyle = C.bar;
-      rounded(ctx, barX, rowY + rowH / 2 - 8, Math.max(16, (m.count / maxCount) * barMax), 16, 8);
+      ctx.fillStyle = REVIEW_COLORS.bar;
+      drawRounded(ctx, barX, rowY + rowH / 2 - 8, Math.max(16, (m.count / maxCount) * barMax), 16, 8);
     }
-    text(ctx, String(m.count), width - pad, rowY + rowH / 2 + 10, { size: 26, color: C.muted, align: 'right' });
+    drawText(ctx, String(m.count), width - pad, rowY + rowH / 2 + 10, { size: 26, color: REVIEW_COLORS.muted, align: 'right' });
   });
 }

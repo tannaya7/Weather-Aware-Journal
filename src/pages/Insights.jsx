@@ -6,6 +6,9 @@ import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.
 import { MoodDotRows } from '../components/Charts/MoodDotRows.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { Patterns } from '../components/Patterns/Patterns.jsx';
+import { GoalsProgress } from '../components/GoalsProgress/GoalsProgress.jsx';
+import { MoodOutlook } from '../components/MoodOutlook/MoodOutlook.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { moodByFactor, moodByTemperature, weeklyMoodTrend, withMoonFraction } from '../lib/insights.js';
 import { enabledHabits, habitMoodEffects } from '../lib/habits.js';
@@ -61,10 +64,8 @@ export function Insights() {
         .filter((f) => f.rows.length >= 2),
     [entries],
   );
-  const habitEffects = useMemo(
-    () => habitMoodEffects(entries, enabledHabits(habitConfig)),
-    [entries, habitConfig],
-  );
+  const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
+  const habitEffects = useMemo(() => habitMoodEffects(entries, habits), [entries, habits]);
 
   return (
     <>
@@ -105,6 +106,12 @@ export function Insights() {
               <p className={styles.sub}>A short reflection on your week, written by AI</p>
               <Reflection scope="week" />
             </section>
+
+            <GoalsProgress entries={entries} habits={habits} goals={habitConfig.goals} />
+
+            <MoodOutlook entries={entries} />
+
+            <Patterns entries={entries} habits={habits} />
 
             <section className={styles.card} aria-labelledby="trend-heading">
               <div className={styles.cardHead}>
