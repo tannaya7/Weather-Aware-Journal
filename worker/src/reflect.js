@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { authorize } from './vault.js';
 import { error, json, readJson } from './http.js';
+import { LIMITS, consume, tooMany } from './ratelimit.js';
 
 export const MODEL = 'claude-opus-5-5';
 export const DAILY_LIMIT = 20;
@@ -42,8 +43,10 @@ function today() {
 // POST /v1/vaults/:id/reflect  { scope: 'week' | 'entry', entries: [...] }
 // Needs a synced journal (that's the identity), and is capped per day so a
 // leaked sync code can't run up the bill.
-export async function reflect(request, env, vaultId, { client } = {}) {
-  const auth = await authorize(request, env, vaultId);
+export async function reflect(request, env, vaultId, deps = {}) {
+  const { client } = deps;
+  const now = deps.now?.() ?? Date.now();
+  const auth = await authorize(request, env, vaultId, { now });
   if (auth.response) return auth.response;
   if (!env.ANTHROPIC_API_KEY && !client) return error(503, 'AI reflections are not set up on this server');
 
@@ -55,6 +58,11 @@ export async function reflect(request, env, vaultId, { client } = {}) {
   }
   const entries = cleanEntries(body.entries);
   if (!entries?.length) return error(400, 'No entries to reflect on');
+
+  // Besides the daily cap, no more than a few at once.
+  if (!(await consume(env, `reflect:${vaultId}`, LIMITS.reflectBurst, now))) {
+    return tooMany('Slow down a little and try again.', LIMITS.reflectBurst.windowSeconds, now);
+  }
 
   const usageKey = `vault:${vaultId}:ai:${today()}`;
   const used = Number((await env.JOURNAL.get(usageKey)) || 0);

@@ -8,6 +8,7 @@ import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.j
 import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
 import { GoalSettings } from '../components/GoalSettings/GoalSettings.jsx';
 import { SemanticSettings } from '../components/SemanticSettings/SemanticSettings.jsx';
+import { StorageSettings } from '../components/StorageSettings/StorageSettings.jsx';
 import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
 import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
@@ -298,6 +299,13 @@ export function Settings() {
             Search by meaning
           </h2>
           <SemanticSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="storage-heading">
+          <h2 id="storage-heading" className={styles.heading}>
+            Storage
+          </h2>
+          <StorageSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="backfill-heading">

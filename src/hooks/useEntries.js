@@ -23,6 +23,7 @@ import { mergeEntries, mergeImportedEntries } from '../lib/exportImport.js';
 import { readEncryptedBackup } from '../lib/backup.js';
 import { getPasskeySecret, registerPasskey } from '../lib/passkey.js';
 import { DEFAULT_HABIT_CONFIG } from '../lib/habits.js';
+import { recordEdit } from '../lib/entryHistory.js';
 
 // Owns the journal entries array and every change to it, persisted to
 // IndexedDB (lib/storage.js). Loading is async, so `status` moves from
@@ -141,10 +142,14 @@ export function useEntries() {
 
   const updateEntry = useCallback(
     (id, data) =>
-      persist((prev) => ({
-        next: prev.map((e) => (e.id === id ? { ...e, ...data, id, updatedAt: Date.now() } : e)),
-        result: undefined,
-      })),
+      persist((prev) => {
+        const now = Date.now();
+        return {
+          // The writing before this edit goes into the entry's history.
+          next: prev.map((e) => (e.id === id ? recordEdit(e, { ...e, ...data, id, updatedAt: now }, now) : e)),
+          result: undefined,
+        };
+      }),
     [persist],
   );
 
@@ -319,6 +324,23 @@ export function useEntries() {
       }),
     [enqueue, applySettings],
   );
+  // Changes a setting based on its value *at the moment the change runs*,
+  // after everything queued before it. `update(current)` returns the new
+  // value, or the same one (or undefined) to leave it alone. Use this when
+  // the decision depends on the current value: checking first and writing
+  // later can be undone by a change that was queued in between.
+  const updateSetting = useCallback(
+    (name, update) =>
+      enqueue(async () => {
+        const current = settingsRef.current[name];
+        const next = update(current);
+        if (next === undefined || next === current) return current;
+        await saveSetting(name, next, keyRef.current);
+        applySettings({ ...settingsRef.current, [name]: next });
+        return next;
+      }),
+    [enqueue, applySettings],
+  );
   const setHabitConfig = useCallback((config) => setSetting('habits', config), [setSetting]);
 
   // --- Drafts (encrypted alongside entries when the lock is on) ---
@@ -350,6 +372,7 @@ export function useEntries() {
     setHabitConfig,
     settings,
     setSetting,
+    updateSetting,
     replaceAll,
     getEntriesNow: () => entriesRef.current,
     getSettingsNow: () => settingsRef.current,

@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../Button/Button.jsx';
 import { useEntriesContext } from '../../context/EntriesContext.jsx';
 import { formatSyncCode, getServerUrl, setServerUrl } from '../../lib/syncClient.js';
+import { getEntryTitle } from '../../lib/entryTitle.js';
+import { describeSync } from '../../lib/syncStatus.js';
 import styles from './SyncSettings.module.css';
 
 function when(timestamp) {
@@ -123,14 +126,31 @@ export function SyncSettings() {
   return (
     <div className={styles.sync}>
       <p className={styles.status} role="status">
-        {sync.status === 'syncing'
-          ? 'Syncing…'
-          : sync.status === 'error'
-            ? `Sync problem: ${sync.error}`
-            : sync.lastSyncedAt
-              ? `Synced · last ${when(sync.lastSyncedAt)}`
-              : 'Not synced yet'}
+        {describeSync(sync, when)}
       </p>
+      {sync.status === 'paused' && sync.errorCode === 'remote-deleted' && (
+        <div className={styles.actions}>
+          <Button type="button" small disabled={busy} onClick={() => run(sync.uploadAgain, 'This journal is on the server again.')}>
+            Upload this journal again
+          </Button>
+        </div>
+      )}
+      {sync.conflicts.length > 0 && (
+        <div className={styles.conflicts}>
+          <p className={styles.text}>
+            {sync.conflicts.length === 1
+              ? 'One entry was edited on two devices at once. Nothing was lost; take a look and choose:'
+              : `${sync.conflicts.length} entries were edited on two devices at once. Nothing was lost; take a look and choose:`}
+          </p>
+          <ul>
+            {sync.conflicts.map((entry) => (
+              <li key={entry.id}>
+                <Link to={`/entry/${entry.id}`}>{getEntryTitle(entry)}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {message && <p className={styles.success}>{message}</p>}
       {error && (
         <p className={styles.error} role="alert">

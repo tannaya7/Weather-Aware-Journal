@@ -13,6 +13,9 @@ import { handle } from '../../worker/src/index.js';
 // The real server code in memory, reached through a stubbed fetch.
 function startServer(deps = {}) {
   const store = new Map();
+  // Two seconds pass per request, clear of the server's write throttle.
+  let clock = Date.now();
+  deps = { now: () => (clock += 2000), ...deps };
   const env = {
     ALLOWED_ORIGINS: '',
     ANTHROPIC_API_KEY: 'test',
@@ -100,7 +103,8 @@ describe('Sync settings', () => {
     await user.click(screen.getByRole('button', { name: 'Delete from server' }));
 
     expect(await screen.findByText('The server copy is deleted.')).toBeInTheDocument();
-    expect(store.size).toBe(0);
+    // Only rate-limit counters (which expire on their own) may remain.
+    expect([...store.keys()].filter((k) => !k.startsWith("rl:"))).toEqual([]);
   });
 
   it('explains that reminders need sync first', async () => {

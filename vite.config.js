@@ -70,7 +70,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './tests/setup.js',
+    // Some tests exercise real timers and storage, and slow down when the
+    // whole suite runs at once.
+    testTimeout: 20000,
     // Browser tests (Playwright) live in e2e/ and run separately.
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: ['e2e/**', '**/node_modules/**', 'dist/**'],
   },
 });

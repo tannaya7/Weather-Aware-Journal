@@ -37,6 +37,9 @@ async function vapidEnv() {
   };
 }
 
+// What the app uploads: JSON text of { iv, data } in base64.
+const SEALED = JSON.stringify({ iv: 'AAAAAAAAAAAAAAAA', data: 'Q0lQSEVSVEVYVA==' });
+const SEALED_2 = JSON.stringify({ iv: 'BBBBBBBBBBBBBBBB', data: 'U0VDT05E' });
 const VAULT = 'a'.repeat(64);
 const TOKEN = 'b'.repeat(64);
 const ORIGIN = 'https://tannaya7.github.io';
@@ -59,24 +62,24 @@ function req(method, path, { body, token = TOKEN, origin = ORIGIN } = {}) {
 describe('journal sync', () => {
   it('claims a new journal on first upload, then serves it back', async () => {
     const env = makeEnv();
-    const put = await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'CIPHERTEXT' } }), env);
+    const put = await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     expect(put.status).toBe(200);
-    expect(await put.json()).toEqual({ version: 1 });
+    expect(await put.json()).toMatchObject({ version: 1 });
 
     const get = await handle(req('GET', `/v1/vaults/${VAULT}/journal`), env);
-    expect(await get.json()).toMatchObject({ version: 1, data: 'CIPHERTEXT' });
+    expect(await get.json()).toMatchObject({ version: 1, data: SEALED });
     expect(get.headers.get('access-control-allow-origin')).toBe(ORIGIN);
   });
 
   it('stores only a hash of the token, never the token itself', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     expect([...env.JOURNAL.store.values()].join()).not.toContain(TOKEN);
   });
 
   it('rejects the wrong token, a missing token, and unknown journals', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
 
     expect((await handle(req('GET', `/v1/vaults/${VAULT}/journal`, { token: 'c'.repeat(64) }), env)).status).toBe(403);
     expect((await handle(req('GET', `/v1/vaults/${VAULT}/journal`, { token: null }), env)).status).toBe(401);
@@ -86,19 +89,21 @@ describe('journal sync', () => {
 
   it('refuses an upload built on an old version (another device synced first)', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'one' } }), env);
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 1, data: 'two' } }), env);
+    const at = (ms) => ({ now: () => 1_000_000 + ms });
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env, at(0));
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 1, data: SEALED_2 } }), env, at(2000));
 
-    const stale = await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 1, data: 'three' } }), env);
+    const stale = await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 1, data: SEALED } }), env, at(4000));
     expect(stale.status).toBe(409);
     expect(await stale.json()).toMatchObject({ version: 2 });
   });
 
   it('deletes everything for a journal', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     expect((await handle(req('DELETE', `/v1/vaults/${VAULT}`), env)).status).toBe(200);
-    expect(env.JOURNAL.store.size).toBe(0);
+    // Only rate-limit counters (which expire on their own) may remain.
+    expect([...env.JOURNAL.store.keys()].filter((k) => !k.startsWith('rl:'))).toEqual([]);
   });
 
   it('answers CORS preflight only for allowed sites', async () => {
@@ -120,7 +125,7 @@ describe('AI reflections', () => {
 
   async function syncedEnv() {
     const env = makeEnv({ ANTHROPIC_API_KEY: 'test' });
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     return env;
   }
 
@@ -154,17 +159,20 @@ describe('AI reflections', () => {
     expect((await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), fresh, { client })).status).toBe(404);
 
     const env = await syncedEnv();
+    // A minute apart, so the short-burst limit stays out of the way.
+    let clock = Date.now();
+    const deps = { client, now: () => (clock += 61_000) };
     for (let i = 0; i < DAILY_LIMIT; i++) {
-      await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), env, { client });
+      await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), env, deps);
     }
-    const over = await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), env, { client });
+    const over = await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), env, deps);
     expect(over.status).toBe(429);
     expect(client.beta.messages.create).toHaveBeenCalledTimes(DAILY_LIMIT);
   });
 
   it('says so when the server has no API key', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     expect((await handle(req('POST', `/v1/vaults/${VAULT}/reflect`, { body: { entries: ENTRIES } }), env)).status).toBe(503);
   });
 });
@@ -198,7 +206,7 @@ describe('push reminders', () => {
 
   it('saves a reminder, sends it when due, and drops expired subscriptions', async () => {
     const env = { ...makeEnv(), ...(await vapidEnv()) };
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     const saved = await handle(
       req('PUT', `/v1/vaults/${VAULT}/reminder`, {
         body: { subscription: { endpoint: 'https://push.example/abc' }, time: '20:30', timeZone: 'Asia/Kolkata' },
@@ -220,7 +228,7 @@ describe('push reminders', () => {
 
   it('rejects bad reminder settings', async () => {
     const env = makeEnv();
-    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: 'x' } }), env);
+    await handle(req('PUT', `/v1/vaults/${VAULT}/journal`, { body: { baseVersion: 0, data: SEALED } }), env);
     const bad = await handle(
       req('PUT', `/v1/vaults/${VAULT}/reminder`, {
         body: { subscription: { endpoint: 'http://insecure' }, time: '25:00', timeZone: 'Nowhere/City' },

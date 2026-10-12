@@ -7,7 +7,7 @@ import {
   sha256Hex,
   toBase64,
 } from './crypto.js';
-import { mergeJournals } from './syncMerge.js';
+import { mergeJournals, sameJournal } from './syncMerge.js';
 
 // Talking to the optional sync server (worker/). Everything leaves this
 // device encrypted with a key derived from the sync code, which the server
@@ -16,12 +16,27 @@ import { mergeJournals } from './syncMerge.js';
 
 const SERVER_KEY = 'weatherJournalServerUrl';
 
+// `code` says what kind of failure it was, so callers can decide what to do
+// without reading the message: network, rate-limited, server, auth,
+// not-found, too-large, wrong-code, remote-deleted, or request.
 export class SyncError extends Error {
-  constructor(message, status) {
+  constructor(message, status, retryAfter = null, code = 'request') {
     super(message);
     this.name = 'SyncError';
     this.status = status;
+    // Seconds the server asked us to wait (429 responses).
+    this.retryAfter = retryAfter;
+    this.code = code;
   }
+}
+
+function codeForStatus(status) {
+  if (status === 413) return 'too-large';
+  if (status === 429) return 'rate-limited';
+  if (status === 404) return 'not-found';
+  if (status === 401 || status === 403) return 'auth';
+  if (status >= 500) return 'server';
+  return 'request';
 }
 
 // Set at build time (VITE_SERVER_URL) or overridden in Settings.
@@ -93,11 +108,27 @@ async function call(identity, method, path, body, fetchImpl = fetch) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new SyncError("Couldn't reach the sync server. Check your connection.");
+    throw new SyncError("Couldn't reach the sync server. Check your connection.", undefined, null, 'network');
   }
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new SyncError(data.error || `Server error (${response.status})`, response.status);
+  if (!response.ok) {
+    const wait = Number(response.headers?.get?.('retry-after'));
+    throw new SyncError(
+      data.error || `Server error (${response.status})`,
+      response.status,
+      Number.isFinite(wait) && wait > 0 ? wait : null,
+      codeForStatus(response.status),
+    );
+  }
   return data;
+}
+
+// Has the journal on the server changed? One small request that never
+// downloads the journal, so devices can ask every few seconds.
+export async function checkVersion(code, fetchImpl = fetch) {
+  const identity = await deriveSyncIdentity(code);
+  const { version } = await call(identity, 'GET', '/version', null, fetchImpl);
+  return version;
 }
 
 async function encryptSnapshot(identity, snapshot) {
@@ -110,13 +141,35 @@ async function decryptSnapshot(identity, text) {
   try {
     return await decryptJson(identity.key, { iv: fromBase64(sealed.iv), data: fromBase64(sealed.data) });
   } catch {
-    throw new SyncError("This sync code doesn't match the journal on the server.");
+    throw new SyncError("This sync code doesn't match the journal on the server.", undefined, null, 'wrong-code');
   }
 }
 
 // One sync round: download, merge with this device's copy, upload the
 // result. If another device uploads in between (409), merge again.
-export async function syncJournal({ code, local, fetchImpl = fetch, maxAttempts = 3 }) {
+const MAX_WAIT_SECONDS = 10;
+const realSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A 429 from the server means "too fast, wait a moment" (it allows about
+// one upload a second per journal): wait as long as it asks, then start the
+// round again from a fresh download rather than reuse a stale one.
+//
+// `knownVersion` is the version this device last synced. If the server now
+// has nothing (version 0), the copy was deleted elsewhere on purpose, and
+// quietly uploading this device's journal again would undo that, so it
+// stops and says so (code 'remote-deleted').
+export async function syncJournal({
+  code,
+  local,
+  lastSyncedAt = null,
+  knownVersion = 0,
+  fetchImpl = fetch,
+  maxAttempts = 5,
+  sleep = realSleep,
+}) {
+  // When the sync began, not ended: an edit made while it runs is not in
+  // the upload, so it must still count as made after this sync.
+  const startedAt = Date.now();
   const identity = await deriveSyncIdentity(code);
   let snapshot = local;
 
@@ -125,14 +178,23 @@ export async function syncJournal({ code, local, fetchImpl = fetch, maxAttempts 
       if (err.status === 404) return { version: 0, data: null };
       throw err;
     });
+    if (remote.version === 0 && knownVersion > 0) {
+      throw new SyncError('The synced copy was deleted from the server.', 404, null, 'remote-deleted');
+    }
     const remoteSnapshot = remote.data ? await decryptSnapshot(identity, remote.data) : { entries: [], tombstones: {} };
-    const merged = mergeJournals(snapshot, remoteSnapshot);
+    const merged = mergeJournals(snapshot, remoteSnapshot, { lastSyncedAt });
     const payload = {
       format: 1,
       entries: merged.entries,
       tombstones: merged.tombstones,
       habits: snapshot.habits ?? remoteSnapshot.habits ?? null,
     };
+
+    // Nothing to add to what the server has: do not upload (and so do not
+    // bump its version, which would make every other device sync too).
+    if (remote.version > 0 && sameJournal(payload, remoteSnapshot)) {
+      return { ...payload, version: remote.version, syncedAt: startedAt };
+    }
 
     try {
       const { version } = await call(
@@ -142,8 +204,13 @@ export async function syncJournal({ code, local, fetchImpl = fetch, maxAttempts 
         { baseVersion: remote.version, data: await encryptSnapshot(identity, payload) },
         fetchImpl,
       );
-      return { ...payload, version, syncedAt: Date.now() };
+      return { ...payload, version, syncedAt: startedAt };
     } catch (err) {
+      if (err.status === 429 && err.retryAfter) {
+        await sleep(Math.min(err.retryAfter, MAX_WAIT_SECONDS) * 1000);
+        snapshot = payload;
+        continue;
+      }
       if (err.status !== 409) throw err;
       snapshot = payload; // someone else synced first: merge on top of theirs
     }

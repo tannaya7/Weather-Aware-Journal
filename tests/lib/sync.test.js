@@ -15,6 +15,10 @@ import { handle } from '../../worker/src/index.js';
 // its handler, with a Map standing in for Workers KV.
 function inMemoryServer(extraEnv = {}, deps = {}) {
   const store = new Map();
+  // A clock that moves two seconds per request, so the server's
+  // one-upload-a-second throttle never gets in the way of unrelated tests.
+  let clock = Date.now();
+  deps = { now: () => (clock += 2000), ...deps };
   const env = {
     ALLOWED_ORIGINS: '',
     JOURNAL: {

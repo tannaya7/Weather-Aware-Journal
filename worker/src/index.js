@@ -1,11 +1,12 @@
 import { corsHeaders, error, json, withCors } from './http.js';
-import { deleteVault, getJournal, putJournal } from './vault.js';
+import { deleteVault, getJournal, getVersion, putJournal } from './vault.js';
 import { reflect } from './reflect.js';
 import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push.js';
 
 // Weather Journal's optional server (Cloudflare Worker + KV):
 //   GET    /v1/health
 //   GET    /v1/vaults/:id/journal      encrypted journal + version
+//   GET    /v1/vaults/:id/version      just the version (cheap to poll)
 //   PUT    /v1/vaults/:id/journal      { baseVersion, data } -> new version, or 409
 //   DELETE /v1/vaults/:id              remove everything for this journal
 //   POST   /v1/vaults/:id/reflect      AI reflection on entries the app sends
@@ -18,6 +19,7 @@ const ROUTES = [
   ['GET', /^\/v1\/health$/, () => json({ ok: true })],
   ['GET', /^\/v1\/push\/public-key$/, (req, env) => publicKey(env)],
   ['GET', /^\/v1\/vaults\/([^/]+)\/journal$/, getJournal],
+  ['GET', /^\/v1\/vaults\/([^/]+)\/version$/, getVersion],
   ['PUT', /^\/v1\/vaults\/([^/]+)\/journal$/, putJournal],
   ['DELETE', /^\/v1\/vaults\/([^/]+)$/, deleteVault],
   ['POST', /^\/v1\/vaults\/([^/]+)\/reflect$/, reflect],
@@ -40,6 +42,13 @@ export async function handle(request, env, deps = {}) {
         return withCors(error(500, 'Server error'), request, env);
       }
     }
+  }
+  // A known path with the wrong method is 405, not 404.
+  const allowed = ROUTES.filter(([, pattern]) => pattern.test(pathname)).map(([method]) => method);
+  if (allowed.length) {
+    const response = error(405, 'Method not allowed');
+    response.headers.set('allow', [...new Set(allowed)].join(', '));
+    return withCors(response, request, env);
   }
   return withCors(error(404, 'Not found'), request, env);
 }

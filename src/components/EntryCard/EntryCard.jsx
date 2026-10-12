@@ -6,6 +6,7 @@ import { fontFamilyFor, weatherCardStyle } from '../../lib/entryStyle.js';
 import { stripMarkdown, checklistProgress } from '../../lib/richText.js';
 import { getEntryImages } from '../../lib/entryImages.js';
 import { Highlight } from '../Highlight/Highlight.jsx';
+import { hasConflict } from '../../lib/entryHistory.js';
 import styles from './EntryCard.module.css';
 
 export function EntryCard({ entry, onEdit, onDelete, highlight }) {
@@ -44,6 +45,11 @@ export function EntryCard({ entry, onEdit, onDelete, highlight }) {
         <p className={styles.preview}>
           <Highlight text={stripMarkdown(entry.content)} terms={highlight} />
         </p>
+        {hasConflict(entry) && (
+          <p className={styles.extras}>
+            <span>⚠️ Edited on two devices: needs a look</span>
+          </p>
+        )}
         {(checks.total > 0 || voiceCount > 0 || photoCount > 0) && (
           <p className={styles.extras}>
             {checks.total > 0 && (

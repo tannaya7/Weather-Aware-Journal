@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "npx wrangler dev",
     "deploy": "npx wrangler deploy",
-    "vapid-keys": "node scripts/generate-vapid-keys.mjs"
+    "vapid-keys": "node scripts/generate-vapid-keys.mjs",
+    "deploy:staging": "npx wrangler deploy --env staging",
+    "dev:staging": "npx wrangler dev --env staging"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0"

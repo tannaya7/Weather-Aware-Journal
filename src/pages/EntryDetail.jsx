@@ -13,6 +13,8 @@ import { allHabits } from '../lib/habits.js';
 import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
 import { RichText } from '../components/RichText/RichText.jsx';
 import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { ConflictNotice, EntryHistory } from '../components/EntryVersions/EntryVersions.jsx';
+import { hasConflict } from '../lib/entryHistory.js';
 import { toggleChecklistLine } from '../lib/richText.js';
 import { relatedEntries } from '../lib/search.js';
 import { formatDuration } from '../hooks/useVoiceRecorder.js';
@@ -110,6 +112,9 @@ export function EntryDetail() {
       </Header>
 
       <div className={`container ${styles.page}`} id="main-content" role="main">
+        {hasConflict(entry) && (
+          <ConflictNotice entry={entry} onResolve={(fields) => updateEntry(entry.id, fields)} />
+        )}
         <article
           className={styles.article}
           style={{ fontFamily: fontFamilyFor(entry), ...weatherCardStyle(entry) }}
@@ -176,6 +181,8 @@ export function EntryDetail() {
         <section className={styles.related} aria-label="Reflect">
           <Reflection scope="entry" entry={entry} />
         </section>
+
+        <EntryHistory entry={entry} onRestore={(fields) => updateEntry(entry.id, fields)} />
 
         <RelatedEntries entry={entry} entries={entries} />
       </div>

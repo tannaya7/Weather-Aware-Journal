@@ -22,3 +22,19 @@ VAPID_SUBJECT = "mailto:you@example.com"
 #   ANTHROPIC_API_KEY   for AI reflections
 #   VAPID_PUBLIC_KEY    from `npm run vapid-keys`
 #   VAPID_PRIVATE_JWK   from `npm run vapid-keys`
+
+# A separate copy for trying changes before they reach your real journal:
+#   npx wrangler kv namespace create JOURNAL --env staging
+#   (paste the id below, then)  npm run deploy:staging
+# It has its own storage, so nothing here touches production data. It sends
+# no daily reminders (no cron).
+[env.staging]
+name = "weather-journal-server-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "JOURNAL"
+id = "REPLACE_WITH_STAGING_KV_NAMESPACE_ID"
+
+[env.staging.vars]
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173"
+VAPID_SUBJECT = "mailto:you@example.com"

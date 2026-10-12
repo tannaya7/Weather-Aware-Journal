@@ -35,12 +35,12 @@ describe('Weekly goals in Settings', () => {
     await user.click(within(goals).getByRole('checkbox', { name: /exercise/i }));
     expect(await within(goals).findByText('Exercise: 3 days a week')).toBeInTheDocument();
 
-    await user.selectOptions(within(goals).getByLabelText('Exercise days per week'), '5');
+    await user.selectOptions(await within(goals).findByLabelText('Exercise days per week'), '5');
     expect(await within(goals).findByText('Exercise: 5 days a week')).toBeInTheDocument();
 
     await user.click(within(goals).getByRole('checkbox', { name: /sleep/i }));
     expect(await within(goals).findByText('Sleep: at least 7 hours on 5 days a week')).toBeInTheDocument();
-    await user.selectOptions(within(goals).getByLabelText('Sleep goal type'), 'atMost');
+    await user.selectOptions(await within(goals).findByLabelText('Sleep goal type'), 'atMost');
     expect(await within(goals).findByText('Sleep: at most 7 hours on 5 days a week')).toBeInTheDocument();
 
     await waitFor(async () => {
@@ -99,7 +99,7 @@ describe('Goals and outlook on Insights', () => {
     const view = await renderAt('/settings');
     const goals = screen.getByRole('region', { name: 'Weekly goals' });
     await user.click(within(goals).getByRole('checkbox', { name: /exercise/i }));
-    await user.selectOptions(within(goals).getByLabelText('Exercise days per week'), '1');
+    await user.selectOptions(await within(goals).findByLabelText('Exercise days per week'), '1');
     await waitFor(async () => expect((await loadSetting('habits')).goals.exercise.days).toBe(1));
     view.unmount();
 
