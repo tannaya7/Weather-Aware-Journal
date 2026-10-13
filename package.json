@@ -11,7 +11,10 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --grep-invert @visual",
+    "check:budgets": "node scripts/check-budgets.mjs",
+    "test:visual": "playwright test e2e/visual.spec.js --project=desktop",
+    "test:visual:update": "playwright test e2e/visual.spec.js --project=desktop --update-snapshots"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.1",

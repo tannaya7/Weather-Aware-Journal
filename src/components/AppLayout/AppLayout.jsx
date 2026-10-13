@@ -1,12 +1,14 @@
 import { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '../Sidebar/Sidebar.jsx';
 import { SyncStatusBar } from '../SyncStatusBar/SyncStatusBar.jsx';
 import { StorageNotice } from '../StorageNotice/StorageNotice.jsx';
+import { ErrorBoundary } from '../ErrorBoundary/ErrorBoundary.jsx';
 import styles from './AppLayout.module.css';
 
 // Persistent left navigation shell wrapping every route.
 export function AppLayout() {
+  const { pathname } = useLocation();
   return (
     <div className={styles.shell}>
       <Sidebar />
@@ -21,7 +23,9 @@ export function AppLayout() {
             </p>
           }
         >
-          <Outlet />
+          <ErrorBoundary resetKey={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </Suspense>
       </div>
     </div>

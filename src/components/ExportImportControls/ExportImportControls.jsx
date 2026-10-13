@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { buildExportFilename, serializeEntries } from '../../lib/exportImport.js';
-import { parseImportFiles, toMarkdown } from '../../lib/importers.js';
+import { parseImportFiles } from '../../lib/importers.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 
 export function ExportImportControls({ entries, onImport }) {
@@ -23,12 +23,6 @@ export function ExportImportControls({ entries, onImport }) {
   function handleExport() {
     download(serializeEntries(entries), 'application/json', buildExportFilename());
     announce(`Exported ${entries.length} entries.`);
-  }
-
-  // Readable anywhere: one Markdown file, each entry with its details on top.
-  function handleExportMarkdown() {
-    download(toMarkdown(entries), 'text/markdown', buildExportFilename().replace(/\.json$/, '.md'));
-    announce(`Exported ${entries.length} entries as Markdown.`);
   }
 
   function handleImportClick() {
@@ -62,9 +56,6 @@ export function ExportImportControls({ entries, onImport }) {
     <>
       <Button type="button" variant="secondary" small onClick={handleExport} aria-label="Export all entries as JSON">
         Export
-      </Button>
-      <Button type="button" variant="secondary" small onClick={handleExportMarkdown} aria-label="Export all entries as Markdown">
-        Export .md
       </Button>
       <Button
         type="button"

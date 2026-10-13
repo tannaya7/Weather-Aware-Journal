@@ -1,6 +1,7 @@
 import { corsHeaders, error, json, withCors } from './http.js';
 import { deleteVault, getJournal, getVersion, putJournal } from './vault.js';
 import { reflect } from './reflect.js';
+import { receiveError } from './errors.js';
 import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push.js';
 
 // Weather Journal's optional server (Cloudflare Worker + KV):
@@ -11,6 +12,7 @@ import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push
 //   DELETE /v1/vaults/:id              remove everything for this journal
 //   POST   /v1/vaults/:id/reflect      AI reflection on entries the app sends
 //   GET    /v1/push/public-key         VAPID public key
+//   POST   /v1/errors                  a scrubbed error report (logged, not stored)
 //   PUT    /v1/vaults/:id/reminder     daily reminder time + push subscription
 //   DELETE /v1/vaults/:id/reminder
 // Every /vaults route needs "Authorization: Bearer <token>" (see vault.js).
@@ -18,6 +20,7 @@ import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push
 const ROUTES = [
   ['GET', /^\/v1\/health$/, () => json({ ok: true })],
   ['GET', /^\/v1\/push\/public-key$/, (req, env) => publicKey(env)],
+  ['POST', /^\/v1\/errors$/, receiveError],
   ['GET', /^\/v1\/vaults\/([^/]+)\/journal$/, getJournal],
   ['GET', /^\/v1\/vaults\/([^/]+)\/version$/, getVersion],
   ['PUT', /^\/v1\/vaults\/([^/]+)\/journal$/, putJournal],

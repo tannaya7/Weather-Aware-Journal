@@ -8,6 +8,8 @@ import { PrintJournal } from '../components/PrintJournal/PrintJournal.jsx';
 import { BackupSection } from '../components/BackupSection/BackupSection.jsx';
 import { PeriodReview } from '../components/PeriodReview/PeriodReview.jsx';
 import { enabledHabits } from '../lib/habits.js';
+import { toMarkdown } from '../lib/importers.js';
+import { buildExportFilename } from '../lib/exportImport.js';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import {
@@ -207,6 +209,33 @@ export function ExportPage() {
             Weekly &amp; monthly review
           </h2>
           <PeriodReview entries={entries} habits={habits} goals={habitConfig.goals} onPrint={setJob} />
+        </section>
+
+        <section className={styles.card} aria-labelledby="markdown-heading">
+          <h2 id="markdown-heading" className={styles.heading}>
+            Markdown
+          </h2>
+          <p className={styles.text}>
+            Every entry in one plain-text file, readable in any notes app, with the date, mood, tags, and weather
+            above each one. It can be imported back here (Import on the home page).
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={entries.length === 0}
+            onClick={() => {
+              const url = URL.createObjectURL(new Blob([toMarkdown(entries)], { type: 'text/markdown' }));
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = buildExportFilename().replace(/\.json$/, '.md');
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Download as Markdown
+          </Button>
         </section>
 
         <section className={styles.card} aria-labelledby="backup-heading">

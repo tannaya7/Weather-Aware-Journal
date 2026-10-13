@@ -1,0 +1,27 @@
+name: Update visual baselines
+
+# Run by hand after an intended design change. It takes new screenshots on
+# Linux (what CI compares on) and attaches them to the run; look at them,
+# then commit them under e2e/visual.spec.js-snapshots/.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual:update
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: e2e/visual.spec.js-snapshots/*-linux.png

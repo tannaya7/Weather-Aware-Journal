@@ -11,6 +11,7 @@ import { GoalSettings } from '../components/GoalSettings/GoalSettings.jsx';
 import { SemanticSettings } from '../components/SemanticSettings/SemanticSettings.jsx';
 import { StorageSettings } from '../components/StorageSettings/StorageSettings.jsx';
 import { LanguageSettings } from '../components/LanguageSettings/LanguageSettings.jsx';
+import { DiagnosticsSettings } from '../components/DiagnosticsSettings/DiagnosticsSettings.jsx';
 import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
 import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
@@ -302,6 +303,13 @@ export function Settings() {
             Search by meaning
           </h2>
           <SemanticSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="diagnostics-heading">
+          <h2 id="diagnostics-heading" className={styles.heading}>
+            Error reports
+          </h2>
+          <DiagnosticsSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="language-heading">
