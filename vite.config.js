@@ -7,7 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new version waits until the user clicks Refresh in
+      // UpdatePrompt, which also registers the service worker itself.
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['icons/icon.svg', 'icons/icon-maskable.svg'],
       manifest: {
         name: 'Weather Journal',
