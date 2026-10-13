@@ -5,6 +5,8 @@ import styles from './Sidebar.module.css';
 const NAV_ITEMS = [
   { to: '/', label: 'Home', emoji: '🏠', end: true },
   { to: '/calendar', label: 'Calendar', emoji: '📅', end: false },
+  { to: '/insights', label: 'Insights', emoji: '📈', end: false },
+  { to: '/map', label: 'Map', emoji: '🗺️', end: false },
   { to: '/contact', label: 'Contact', emoji: '✉️', end: false },
   { to: '/settings', label: 'Settings', emoji: '⚙️', end: false },
 ];
