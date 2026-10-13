@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../Button/Button.jsx';
+import { passkeyErrorMessage } from '../../lib/passkey.js';
 import styles from './LockScreen.module.css';
 
 const ERASE_CONFIRM = 'ERASE';
@@ -7,12 +8,23 @@ const ERASE_CONFIRM = 'ERASE';
 // Shown instead of the app while the journal is locked. A wrong passcode
 // can't be recovered from, so the only way out of a forgotten one is to
 // erase the journal — which takes typing ERASE to confirm.
-export function LockScreen({ onUnlock, onErase }) {
+export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showErase, setShowErase] = useState(false);
   const [eraseText, setEraseText] = useState('');
+
+  async function handlePasskey() {
+    setBusy(true);
+    setError('');
+    try {
+      await onUnlockWithPasskey();
+    } catch (err) {
+      setError(passkeyErrorMessage(err));
+      setBusy(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -36,6 +48,15 @@ export function LockScreen({ onUnlock, onErase }) {
         </span>
         <h1 className={styles.title}>Your journal is locked</h1>
 
+        {onUnlockWithPasskey && (
+          <>
+            <Button type="button" onClick={handlePasskey} disabled={busy}>
+              <span aria-hidden="true">👆</span> Unlock with fingerprint or face
+            </Button>
+            <p className={styles.or}>or use your passcode</p>
+          </>
+        )}
+
         <label className="sr-only" htmlFor="unlockPasscode">
           Passcode
         </label>
@@ -57,7 +78,7 @@ export function LockScreen({ onUnlock, onErase }) {
             {error}
           </p>
         )}
-        <Button type="submit" disabled={busy || !passcode}>
+        <Button type="submit" variant={onUnlockWithPasskey ? 'secondary' : 'primary'} disabled={busy || !passcode}>
           {busy ? 'Unlocking…' : 'Unlock'}
         </Button>
 

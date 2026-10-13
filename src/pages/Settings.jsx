@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
+import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
 import styles from './Settings.module.css';
 
 export const MIN_PASSCODE_LENGTH = 4;
@@ -131,6 +132,87 @@ function ManageLockForm({ onDone }) {
   );
 }
 
+// Fingerprint / face unlock, on top of the passcode (never instead of it:
+// the passcode is the fallback when the passkey isn't available).
+function PasskeySection({ onDone }) {
+  const { passkeyEnabled, enablePasskey, disablePasskey } = useEntriesContext();
+  const [supported, setSupported] = useState(null);
+  const [current, setCurrent] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    isPasskeySupported().then((ok) => !cancelled && setSupported(ok));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleEnable(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await enablePasskey(current);
+      setCurrent('');
+      onDone('Fingerprint or face unlock is on.');
+    } catch (err) {
+      setError(err.name === 'WrongPasscodeError' ? err.message : passkeyErrorMessage(err));
+    }
+    setBusy(false);
+  }
+
+  async function handleDisable() {
+    setBusy(true);
+    await disablePasskey();
+    setBusy(false);
+    onDone('Fingerprint or face unlock is off. Use your passcode to unlock.');
+  }
+
+  return (
+    <div className={styles.subsection}>
+      <h3 className={styles.subheading}>
+        Fingerprint or face unlock {passkeyEnabled ? <span className={styles.badge}>On</span> : null}
+      </h3>
+      {passkeyEnabled ? (
+        <>
+          <p className={styles.text}>
+            Unlock with this device&apos;s fingerprint, face, or PIN. Your passcode still works too.
+          </p>
+          <Button type="button" variant="secondary" disabled={busy} onClick={handleDisable}>
+            Turn off fingerprint or face unlock
+          </Button>
+        </>
+      ) : supported === false ? (
+        <p className={styles.text}>This browser or device can&apos;t unlock the journal with a passkey.</p>
+      ) : (
+        <form onSubmit={handleEnable} noValidate className={styles.form}>
+          <p className={styles.text}>
+            Creates a passkey on this device. Unlocking then only needs your fingerprint, face, or
+            device PIN.
+          </p>
+          <PasscodeField
+            id="passkeyPasscode"
+            label="Current passcode"
+            value={current}
+            onChange={setCurrent}
+            autoComplete="current-password"
+          />
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <Button type="submit" disabled={busy || !current || supported === null}>
+            Set up fingerprint or face unlock
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export function Settings() {
   const { lockEnabled } = useEntriesContext();
   const { announce } = useAnnouncer();
@@ -169,7 +251,10 @@ export function Settings() {
           )}
 
           {lockEnabled ? (
-            <ManageLockForm key="manage" onDone={handleDone} />
+            <>
+              <ManageLockForm key="manage" onDone={handleDone} />
+              <PasskeySection onDone={handleDone} />
+            </>
           ) : (
             <EnableLockForm key="enable" onDone={handleDone} />
           )}

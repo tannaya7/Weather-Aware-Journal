@@ -3,6 +3,7 @@ import { Header } from '../components/Header/Header.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { PrintJournal } from '../components/PrintJournal/PrintJournal.jsx';
+import { BackupSection } from '../components/BackupSection/BackupSection.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import {
@@ -53,7 +54,10 @@ function useYearReviewImage(summary) {
 function YearInReview({ entries }) {
   const { announce } = useAnnouncer();
   const years = useMemo(() => availableYears(entries), [entries]);
-  const [year, setYear] = useState(() => years[0]);
+  const [chosenYear, setYear] = useState(null);
+  // Falls back to the latest year, including when entries arrive after the
+  // page opened (e.g. restoring a backup into an empty journal).
+  const year = years.includes(chosenYear) ? chosenYear : years[0];
   const summary = useMemo(() => (year ? yearSummary(entries, year) : null), [entries, year]);
   const image = useYearReviewImage(summary);
   const fileName = `weather-journal-${year}-in-review.png`;
@@ -208,6 +212,13 @@ export function ExportPage() {
             Year in review
           </h2>
           <YearInReview entries={entries} />
+        </section>
+
+        <section className={styles.card} aria-labelledby="backup-heading">
+          <h2 id="backup-heading" className={styles.heading}>
+            Backups
+          </h2>
+          <BackupSection />
         </section>
 
         <section className={styles.card} aria-labelledby="print-heading">

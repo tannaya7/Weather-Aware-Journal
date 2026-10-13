@@ -83,7 +83,7 @@ test.describe('Writing in the journal', () => {
     await page.getByRole('button', { name: 'Fetch weather data for entered location' }).click();
 
     // The archive (faked as 18°C, clouds) answers for older dates.
-    await expect(page.getByText('18°C')).toBeVisible();
+    await expect(page.getByText('18°C').first()).toBeVisible();
     await expect(page.getByText(/weather updated for hyderabad, india on/i)).toBeVisible();
   });
 

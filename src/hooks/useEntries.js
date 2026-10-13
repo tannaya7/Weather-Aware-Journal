@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  addPasskey,
+  changePasscode as rewrapPasscode,
   clearDraft as clearStoredDraft,
   eraseJournal,
   getLockInfo,
   loadDraft as loadStoredDraft,
   loadEntries,
+  removePasskey,
   removePasscode,
   requestPersistentStorage,
   rescueDraft,
@@ -12,8 +15,11 @@ import {
   saveEntries,
   setPasscode,
   unlock as unlockStorage,
+  unlockWithPasskeySecret,
 } from '../lib/storage.js';
-import { mergeImportedEntries } from '../lib/exportImport.js';
+import { mergeEntries, mergeImportedEntries } from '../lib/exportImport.js';
+import { readEncryptedBackup } from '../lib/backup.js';
+import { getPasskeySecret, registerPasskey } from '../lib/passkey.js';
 
 // Owns the journal entries array and every change to it, persisted to
 // IndexedDB (lib/storage.js). Loading is async, so `status` moves from
@@ -28,6 +34,7 @@ export function useEntries() {
   const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState('loading');
   const [lockEnabled, setLockEnabled] = useState(false);
+  const [passkeyEnabled, setPasskeyEnabled] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   const entriesRef = useRef([]);
@@ -47,6 +54,7 @@ export function useEntries() {
         if (cancelled) return;
         if (lock) {
           setLockEnabled(true);
+          setPasskeyEnabled(Boolean(lock.passkey));
           setStatus('locked');
           return;
         }
@@ -131,11 +139,23 @@ export function useEntries() {
     [persist],
   );
 
+  // Restores an encrypted backup file (lib/backup.js), merging its entries
+  // the same way as a JSON import.
+  const importBackup = useCallback(
+    async (text, password) => {
+      const backupEntries = await readEncryptedBackup(text, password);
+      return persist((prev) => {
+        const result = mergeEntries(prev, backupEntries);
+        return { next: result.entries, result };
+      });
+    },
+    [persist],
+  );
+
   // --- Passcode lock ---
 
-  const unlock = useCallback(
-    async (passcode) => {
-      const key = await unlockStorage(passcode);
+  const openWithKey = useCallback(
+    async (key) => {
       const loaded = await loadEntries(key);
       keyRef.current = key;
       applyEntries(loaded);
@@ -144,6 +164,18 @@ export function useEntries() {
     },
     [applyEntries],
   );
+
+  const unlock = useCallback(
+    async (passcode) => openWithKey(await unlockStorage(passcode)),
+    [openWithKey],
+  );
+
+  // Fingerprint / face / device PIN, via the passkey's PRF secret.
+  const unlockWithPasskey = useCallback(async () => {
+    const lock = await getLockInfo();
+    const secret = await getPasskeySecret(lock.passkey);
+    await openWithKey(await unlockWithPasskeySecret(secret));
+  }, [openWithKey]);
 
   const lock = useCallback(() => {
     if (!lockEnabled) return;
@@ -168,8 +200,28 @@ export function useEntries() {
   const changePasscode = useCallback(
     (currentPasscode, newPasscode) =>
       enqueue(async () => {
-        await unlockStorage(currentPasscode);
-        keyRef.current = await setPasscode(newPasscode, entriesRef.current);
+        const key = await unlockStorage(currentPasscode);
+        await rewrapPasscode(key, newPasscode);
+      }),
+    [enqueue],
+  );
+
+  // Adding a passkey also asks for the passcode first, for the same reason.
+  const enablePasskey = useCallback(
+    (currentPasscode) =>
+      enqueue(async () => {
+        const key = await unlockStorage(currentPasscode);
+        await addPasskey(key, await registerPasskey());
+        setPasskeyEnabled(true);
+      }),
+    [enqueue],
+  );
+
+  const disablePasskey = useCallback(
+    () =>
+      enqueue(async () => {
+        await removePasskey();
+        setPasskeyEnabled(false);
       }),
     [enqueue],
   );
@@ -181,6 +233,7 @@ export function useEntries() {
         await removePasscode(entriesRef.current);
         keyRef.current = null;
         setLockEnabled(false);
+        setPasskeyEnabled(false);
       }),
     [enqueue],
   );
@@ -192,6 +245,7 @@ export function useEntries() {
         keyRef.current = null;
         applyEntries([]);
         setLockEnabled(false);
+        setPasskeyEnabled(false);
         setStatus('ready');
       }),
     [enqueue, applyEntries],
@@ -221,8 +275,13 @@ export function useEntries() {
     restoreEntry,
     getEntryById,
     importEntries,
+    importBackup,
     lockEnabled,
+    passkeyEnabled,
     unlock,
+    unlockWithPasskey,
+    enablePasskey,
+    disablePasskey,
     lock,
     enableLock,
     changePasscode,

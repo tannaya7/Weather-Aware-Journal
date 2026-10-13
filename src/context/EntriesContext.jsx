@@ -93,7 +93,13 @@ export function EntriesProvider({ children }) {
   }
 
   if (status === 'locked') {
-    return <LockScreen onUnlock={base.unlock} onErase={base.eraseAndStartOver} />;
+    return (
+      <LockScreen
+        onUnlock={base.unlock}
+        onUnlockWithPasskey={base.passkeyEnabled ? base.unlockWithPasskey : null}
+        onErase={base.eraseAndStartOver}
+      />
+    );
   }
 
   const value = { ...base, deleteEntry, pendingUndo, undoDelete, dismissUndo };
