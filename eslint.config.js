@@ -43,4 +43,11 @@ export default [
       globals: { ...globals.browser, ...globals.node, ...globals.vitest },
     },
   },
+  {
+    // Playwright fixtures call `use()`, which isn't React's hook.
+    files: ['e2e/**/*.js'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
 ];

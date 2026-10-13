@@ -121,6 +121,10 @@ export function MapPage() {
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     return () => {
+      // Stop any pan/zoom first: removing the map mid-animation makes
+      // Leaflet's next animation frame read panes that no longer exist.
+      map.stop();
+      map.off();
       map.remove();
       mapRef.current = null;
     };
@@ -141,12 +145,14 @@ export function MapPage() {
         .bindPopup(popupContent(place))
         .addTo(layer);
     }
+    // Jump straight to the pins: an animated zoom here has nothing to show,
+    // and could still be running if you leave the page right away.
     if (places.length === 1) {
-      map.setView([places[0].latitude, places[0].longitude], 10);
+      map.setView([places[0].latitude, places[0].longitude], 10, { animate: false });
     } else if (places.length > 1) {
       map.fitBounds(
         places.map((p) => [p.latitude, p.longitude]),
-        { padding: [40, 40], maxZoom: 10 },
+        { padding: [40, 40], maxZoom: 10, animate: false },
       );
     }
   }, [places]);

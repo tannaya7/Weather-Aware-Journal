@@ -81,7 +81,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
   const { stop: stopAutosave } = useDraftAutosave(
     { content, mood, date, tagsRaw, font, location, weather: weather || null },
     baseline,
-    (values) => onDraftChange?.(values && { ...values, savedAt: Date.now() }),
+    (values, meta) => onDraftChange?.(values && { ...values, savedAt: Date.now() }, meta),
   );
 
   async function handleImageChange(e) {

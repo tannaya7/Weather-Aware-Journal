@@ -190,6 +190,7 @@ export async function saveEntries(next, prev = [], key = null) {
 // Drafts are dropped too, so none is left behind unencrypted or under an
 // old passcode.
 async function rewriteAll(entries, key, lockRecord) {
+  clearRescuedDrafts();
   const records = await Promise.all(entries.map((entry) => toRecord(entry, key)));
   await transact([ENTRIES, META], 'readwrite', ({ entries: store, meta }) => {
     store.clear();
@@ -239,8 +240,59 @@ export async function eraseJournal() {
   });
 }
 
+// --- Draft rescue copies ---
+// IndexedDB writes are async, so one started as the tab closes can be cut
+// off, losing the last second of typing. As a backstop, the draft is also
+// written synchronously to localStorage at that moment, and moved into
+// IndexedDB on the next visit. Only while the lock is off: these copies are
+// plain text, so they're never written for a locked journal, and any left
+// over are deleted when a passcode is set.
+const RESCUE_PREFIX = 'weatherJournalDraft:';
+
+export function rescueDraft(draftId, value) {
+  try {
+    localStorage.setItem(RESCUE_PREFIX + draftId, JSON.stringify(value));
+  } catch {
+    // Storage blocked or full: the IndexedDB save is still attempted.
+  }
+}
+
+function takeRescuedDraft(draftId) {
+  try {
+    const raw = localStorage.getItem(RESCUE_PREFIX + draftId);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearRescuedDrafts(draftId = null) {
+  try {
+    if (draftId !== null) {
+      localStorage.removeItem(RESCUE_PREFIX + draftId);
+      return;
+    }
+    for (const name of Object.keys(localStorage)) {
+      if (name.startsWith(RESCUE_PREFIX)) localStorage.removeItem(name);
+    }
+  } catch {
+    // Nothing to clean up if storage is blocked.
+  }
+}
+
 // Drafts share the meta store, and are encrypted too when the lock is on.
 export async function loadDraft(draftId, key = null) {
+  if (key) {
+    clearRescuedDrafts(draftId);
+  } else {
+    const rescued = takeRescuedDraft(draftId);
+    if (rescued) {
+      await saveDraft(draftId, rescued);
+      clearRescuedDrafts(draftId);
+      return rescued;
+    }
+  }
+
   const db = await openDb();
   let record;
   try {
@@ -266,6 +318,7 @@ export async function saveDraft(draftId, value, key = null) {
 }
 
 export async function clearDraft(draftId) {
+  clearRescuedDrafts(draftId);
   await transact([META], 'readwrite', ({ meta }) => meta.delete(`draft:${draftId}`));
 }
 

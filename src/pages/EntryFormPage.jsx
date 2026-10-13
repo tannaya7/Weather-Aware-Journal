@@ -40,8 +40,8 @@ export function EntryFormPage() {
   }, [saveError]);
 
   const handleDraftChange = useCallback(
-    (value) => {
-      const write = value ? saveDraft(draftId, value) : clearDraft(draftId);
+    (value, meta) => {
+      const write = value ? saveDraft(draftId, value, meta) : clearDraft(draftId);
       write.catch((error) => console.warn('Could not save the draft', error));
     },
     [draftId, saveDraft, clearDraft],
