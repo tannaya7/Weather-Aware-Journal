@@ -31,7 +31,7 @@ export function ExportImportControls({ entries, onImport }) {
 
     try {
       const text = await file.text();
-      const result = onImport(text);
+      const result = await onImport(text);
       announce(
         `Imported ${result.importedCount} entr${result.importedCount === 1 ? 'y' : 'ies'}.${
           result.skippedCount ? ` Skipped ${result.skippedCount}.` : ''

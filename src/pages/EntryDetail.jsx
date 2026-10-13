@@ -35,9 +35,11 @@ export function EntryDetail() {
   const title = getEntryTitle(entry);
   const images = getEntryImages(entry);
 
+  // Leave first, so this page doesn't flash "not found" once the entry is
+  // gone; the undo toast shows on the dashboard.
   function handleDelete() {
-    deleteEntry(entry.id);
     navigate('/');
+    deleteEntry(entry.id);
   }
 
   return (

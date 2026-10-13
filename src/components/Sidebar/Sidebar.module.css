@@ -40,6 +40,13 @@
   font-weight: 600;
 }
 
+.link {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .link:hover {
   background: var(--color-surface);
   color: var(--color-text);

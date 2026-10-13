@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EntryForm } from '../../src/components/EntryForm/EntryForm.jsx';
 import { EntryFormPage } from '../../src/pages/EntryFormPage.jsx';
 import { EntryDetail } from '../../src/pages/EntryDetail.jsx';
-import { ThemeProvider } from '../../src/context/ThemeContext.jsx';
 import { AnnouncerProvider } from '../../src/context/AnnouncerContext.jsx';
-import { EntriesProvider } from '../../src/context/EntriesContext.jsx';
+import { quotaError, renderWithJournal, seedEntries } from '../helpers/journal.jsx';
 
 function photo(name) {
   return new File([new Uint8Array(100)], `${name}.png`, { type: 'image/png' });
@@ -94,52 +93,38 @@ describe('Saving when storage is full', () => {
 
   it('keeps you on the form with a clear message', async () => {
     const user = userEvent.setup();
-    render(
-      <ThemeProvider>
-        <AnnouncerProvider>
-          <EntriesProvider>
-            <MemoryRouter initialEntries={['/new']}>
-              <Routes>
-                <Route path="/new" element={<EntryFormPage />} />
-                <Route path="/" element={<p>Dashboard</p>} />
-              </Routes>
-            </MemoryRouter>
-          </EntriesProvider>
-        </AnnouncerProvider>
-      </ThemeProvider>,
+    await renderWithJournal(
+      <Routes>
+        <Route path="/new" element={<EntryFormPage />} />
+        <Route path="/" element={<p>Dashboard</p>} />
+      </Routes>,
+      { initialEntries: ['/new'] },
     );
 
-    await user.type(screen.getByLabelText(/what's on your mind/i), 'Will not fit');
-    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('full', 'QuotaExceededError');
+    await user.type(await screen.findByLabelText(/what's on your mind/i), 'Will not fit');
+    const spy = vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(() => {
+      throw quotaError();
     });
     await user.click(screen.getByRole('button', { name: /save entry/i }));
-    spy.mockRestore();
 
-    expect(screen.getByRole('alert')).toHaveTextContent(/out of storage space/);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/out of storage space/);
+    spy.mockRestore();
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
     expect(screen.getByLabelText(/what's on your mind/i)).toHaveValue('Will not fit');
+    expect(screen.getByRole('button', { name: /save entry/i })).toBeEnabled();
   });
 });
 
 describe('EntryDetail photos', () => {
-  it('shows every photo on the entry', () => {
-    localStorage.setItem(
-      'weatherJournalEntries',
-      JSON.stringify([{ id: 7, content: 'Trip', date: '2026-01-01T10:00', images: ['data:a', 'data:b', 'data:c'] }]),
-    );
-    render(
-      <ThemeProvider>
-        <AnnouncerProvider>
-          <EntriesProvider>
-            <MemoryRouter initialEntries={['/entry/7']}>
-              <Routes>
-                <Route path="/entry/:id" element={<EntryDetail />} />
-              </Routes>
-            </MemoryRouter>
-          </EntriesProvider>
-        </AnnouncerProvider>
-      </ThemeProvider>,
+  it('shows every photo on the entry', async () => {
+    await seedEntries([
+      { id: 7, content: 'Trip', date: '2026-01-01T10:00', images: ['data:a', 'data:b', 'data:c'] },
+    ]);
+    await renderWithJournal(
+      <Routes>
+        <Route path="/entry/:id" element={<EntryDetail />} />
+      </Routes>,
+      { initialEntries: ['/entry/7'] },
     );
 
     const srcs = [...document.querySelectorAll('article img')].map((img) => img.getAttribute('src'));

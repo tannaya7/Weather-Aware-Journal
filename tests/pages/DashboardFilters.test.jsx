@@ -1,28 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { IDBFactory } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Dashboard } from '../../src/pages/Dashboard.jsx';
-import { ThemeProvider } from '../../src/context/ThemeContext.jsx';
-import { AnnouncerProvider } from '../../src/context/AnnouncerContext.jsx';
-import { EntriesProvider } from '../../src/context/EntriesContext.jsx';
-
-function seedEntries(entries) {
-  localStorage.setItem('weatherJournalEntries', JSON.stringify(entries));
-}
+import { renderWithJournal, seedEntries } from '../helpers/journal.jsx';
 
 function renderDashboard() {
-  render(
-    <ThemeProvider>
-      <AnnouncerProvider>
-        <EntriesProvider>
-          <MemoryRouter>
-            <Dashboard />
-          </MemoryRouter>
-        </EntriesProvider>
-      </AnnouncerProvider>
-    </ThemeProvider>,
-  );
+  return renderWithJournal(<Dashboard />);
 }
 
 function moodChips() {
@@ -34,24 +18,24 @@ function timelineText() {
 }
 
 describe('Dashboard filters', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
-    seedEntries([
+    await seedEntries([
       { id: 1, content: 'Rainy blues', mood: 'Sad', weatherType: 'Rain', tags: ['work'], date: '2026-09-01T10:00:00' },
       { id: 2, content: 'Sunny picnic', mood: 'Happy', weatherType: 'Clear sky', tags: ['family'], date: '2026-09-02T10:00:00' },
       { id: 3, content: 'Rain dance', mood: 'Happy', weatherType: 'Rain', tags: [], date: '2026-09-03T10:00:00' },
     ]);
   });
 
-  it('shows no filter chips when there are no entries', () => {
-    localStorage.clear();
-    renderDashboard();
+  it('shows no filter chips when there are no entries', async () => {
+    globalThis.indexedDB = new IDBFactory(); // drop the seeded entries
+    await renderDashboard();
     expect(screen.queryByRole('group', { name: /filter by/i })).not.toBeInTheDocument();
   });
 
   it('narrows the timeline and shows a count when a chip is picked', async () => {
     const user = userEvent.setup();
-    renderDashboard();
+    await renderDashboard();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
@@ -66,7 +50,7 @@ describe('Dashboard filters', () => {
 
   it('combines groups, and Clear filters resets them', async () => {
     const user = userEvent.setup();
-    renderDashboard();
+    await renderDashboard();
 
     await user.click(within(moodChips()).getByRole('button', { name: /happy/i }));
     await user.click(
@@ -85,7 +69,7 @@ describe('Dashboard filters', () => {
 
   it('filters by tag', async () => {
     const user = userEvent.setup();
-    renderDashboard();
+    await renderDashboard();
 
     await user.click(
       within(screen.getByRole('group', { name: 'Filter by tag' })).getByRole('button', { name: '#family' }),
