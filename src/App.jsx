@@ -13,6 +13,7 @@ import { Calendar } from './pages/Calendar.jsx';
 import { Contact } from './pages/Contact.jsx';
 import { Settings } from './pages/Settings.jsx';
 import { Insights } from './pages/Insights.jsx';
+import { ExportPage } from './pages/ExportPage.jsx';
 
 // Leaflet is the app's biggest dependency, so the map loads only when opened.
 const MapPage = lazy(() => import('./pages/MapPage.jsx').then((m) => ({ default: m.MapPage })));
@@ -40,6 +41,7 @@ export function App() {
                     </Suspense>
                   }
                 />
+                <Route path="/export" element={<ExportPage />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

@@ -27,6 +27,7 @@ describe('Sidebar', () => {
 
     expect(screen.getByRole('link', { name: /insights/i })).toHaveAttribute('href', '/insights');
     expect(screen.getByRole('link', { name: /map/i })).toHaveAttribute('href', '/map');
+    expect(screen.getByRole('link', { name: /export/i })).toHaveAttribute('href', '/export');
 
     expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: /calendar/i })).toHaveAttribute('href', '/calendar');
@@ -41,8 +42,8 @@ describe('Sidebar', () => {
 
   it('hides the logo link from assistive tech so it is not a duplicate Home link', async () => {
     await renderAt('/');
-    expect(nav().querySelectorAll('a')).toHaveLength(7);
-    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(nav().querySelectorAll('a')).toHaveLength(8);
+    expect(screen.getAllByRole('link')).toHaveLength(7);
   });
 
   it('marks only Home as current on the dashboard', async () => {
