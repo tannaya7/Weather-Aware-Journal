@@ -2,6 +2,7 @@ import { MOODS, emojiForMood } from './moods.js';
 import { iconForType } from './weatherApi.js';
 import { computeStreaks } from './streaks.js';
 import { parseTemperature } from './insights.js';
+import { stripMarkdown } from './richText.js';
 
 const MONTHS = [
   'January',
@@ -61,7 +62,7 @@ export function yearSummary(entries, year) {
     monthCounts.set(d.getMonth(), (monthCounts.get(d.getMonth()) || 0) + 1);
     if (entry.mood) moodCounts.set(entry.mood, (moodCounts.get(entry.mood) || 0) + 1);
     if (entry.weatherType) weatherCounts.set(entry.weatherType, (weatherCounts.get(entry.weatherType) || 0) + 1);
-    words += (entry.content || '').split(/\s+/).filter(Boolean).length;
+    words += stripMarkdown(entry.content).split(/\s+/).filter(Boolean).length;
     const temp = parseTemperature(entry.temperature);
     if (temp !== null) {
       if (!warmest || temp > warmest.temp) warmest = { temp, date: d };

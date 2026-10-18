@@ -16,7 +16,7 @@ import { StreakCard } from '../components/StreakCard/StreakCard.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { isSameDay } from '../lib/dateFormat.js';
-import { getEntryTitle } from '../lib/entryTitle.js';
+import { highlightTerms, matchesQuery, parseQuery } from '../lib/search.js';
 import { EMPTY_FILTERS, applyFilters, getFilterOptions, hasActiveFilters } from '../lib/entryFilters.js';
 import styles from './Dashboard.module.css';
 
@@ -33,16 +33,14 @@ export function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [moodPanelOpen, setMoodPanelOpen] = useState(false);
 
+  const parsedQuery = useMemo(() => parseQuery(searchTerm), [searchTerm]);
+  const highlight = useMemo(() => highlightTerms(parsedQuery), [parsedQuery]);
+
   const visibleEntries = useMemo(() => {
     let list = entries;
 
     if (searchTerm) {
-      list = list.filter((entry) => {
-        const haystack = [getEntryTitle(entry), entry.content, entry.mood, ...(entry.tags || [])]
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(searchTerm);
-      });
+      list = list.filter((entry) => matchesQuery(entry, parsedQuery));
     }
 
     if (dateFilterMode === 'today') {
@@ -58,7 +56,7 @@ export function Dashboard() {
       if (isNaN(aDate) || isNaN(bDate)) return 0;
       return sortOrder === 'oldest' ? aDate - bDate : bDate - aDate;
     });
-  }, [entries, searchTerm, dateFilterMode, filters, sortOrder]);
+  }, [entries, searchTerm, parsedQuery, dateFilterMode, filters, sortOrder]);
 
   const filterOptions = useMemo(() => getFilterOptions(entries), [entries]);
   const isFiltered = Boolean(searchTerm) || dateFilterMode === 'today' || hasActiveFilters(filters);
@@ -146,6 +144,7 @@ export function Dashboard() {
 
         <EntryTimeline
           entries={paginatedEntries}
+          highlight={highlight}
           hasFilters={isFiltered}
           onEdit={handleEdit}
           onDelete={deleteEntry}

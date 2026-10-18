@@ -3,11 +3,17 @@ import { getDateBadgeParts } from '../../lib/dateFormat.js';
 import { getEntryTitle } from '../../lib/entryTitle.js';
 import { emojiForMood } from '../../lib/moods.js';
 import { fontFamilyFor, weatherCardStyle } from '../../lib/entryStyle.js';
+import { stripMarkdown, checklistProgress } from '../../lib/richText.js';
+import { getEntryImages } from '../../lib/entryImages.js';
+import { Highlight } from '../Highlight/Highlight.jsx';
 import styles from './EntryCard.module.css';
 
-export function EntryCard({ entry, onEdit, onDelete }) {
+export function EntryCard({ entry, onEdit, onDelete, highlight }) {
   const { day, weekday } = getDateBadgeParts(entry.date);
   const title = getEntryTitle(entry);
+  const checks = checklistProgress(entry.content);
+  const voiceCount = (entry.audio || []).length;
+  const photoCount = getEntryImages(entry).length;
 
   return (
     <li className={styles.row} style={weatherCardStyle(entry)}>
@@ -35,7 +41,28 @@ export function EntryCard({ entry, onEdit, onDelete }) {
             </span>
           )}
         </div>
-        <p className={styles.preview}>{entry.content}</p>
+        <p className={styles.preview}>
+          <Highlight text={stripMarkdown(entry.content)} terms={highlight} />
+        </p>
+        {(checks.total > 0 || voiceCount > 0 || photoCount > 0) && (
+          <p className={styles.extras}>
+            {checks.total > 0 && (
+              <span>
+                ☑️ {checks.done}/{checks.total} done
+              </span>
+            )}
+            {voiceCount > 0 && (
+              <span>
+                🎙️ {voiceCount} {voiceCount === 1 ? 'voice memo' : 'voice memos'}
+              </span>
+            )}
+            {photoCount > 0 && (
+              <span>
+                📷 {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+              </span>
+            )}
+          </p>
+        )}
         {entry.tags?.length > 0 && (
           <div className={styles.tags}>
             {entry.tags.map((tag) => (
