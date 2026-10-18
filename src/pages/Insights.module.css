@@ -95,3 +95,13 @@
   color: var(--color-text-muted);
   font-size: 14px;
 }
+
+.factor + .factor {
+  margin-top: var(--space-4);
+}
+
+.factorHeading {
+  margin: 0 0 var(--space-2);
+  font-size: 14px;
+  color: var(--color-text);
+}

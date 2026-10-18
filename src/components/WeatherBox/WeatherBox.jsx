@@ -1,6 +1,7 @@
 import { Button } from '../Button/Button.jsx';
 import { isPastDate } from '../../lib/weatherApi.js';
 import { formatDateLong } from '../../lib/dateFormat.js';
+import { SkyDetails } from '../SkyDetails/SkyDetails.jsx';
 import styles from './WeatherBox.module.css';
 
 export function WeatherBox({
@@ -92,6 +93,7 @@ export function WeatherBox({
           )}
         </p>
       )}
+      {weather && <SkyDetails data={weather} date={date} />}
 
       <div className={styles.helper} aria-live="polite" aria-atomic="true">
         {statusMessage}

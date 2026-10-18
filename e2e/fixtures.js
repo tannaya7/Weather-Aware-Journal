@@ -53,6 +53,9 @@ export const test = base.extend({
       const url = new URL(route.request().url());
       return route.fulfill({ json: hourly(url.searchParams.get('start_date'), 18, 3) });
     });
+    await page.route('**/air-quality-api.open-meteo.com/**', (route) =>
+      route.fulfill({ json: { hourly: { time: [], us_aqi: [] } } }),
+    );
     await page.route('**/api.bigdatacloud.net/**', (route) =>
       route.fulfill({ json: { city: 'Hyderabad', countryName: 'India' } }),
     );

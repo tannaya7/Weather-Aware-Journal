@@ -8,12 +8,29 @@ import { getEntryTitle } from '../lib/entryTitle.js';
 import { emojiForMood } from '../lib/moods.js';
 import { fontFamilyFor, weatherCardStyle } from '../lib/entryStyle.js';
 import { getEntryImages } from '../lib/entryImages.js';
+import { allHabits } from '../lib/habits.js';
+import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
 import styles from './EntryDetail.module.css';
+
+function HabitChips({ values, habits }) {
+  const shown = habits.filter((h) => values?.[h.id] !== undefined && values[h.id] !== false);
+  if (shown.length === 0) return null;
+  return (
+    <ul className={styles.habits} aria-label="Habits">
+      {shown.map((h) => (
+        <li key={h.id}>
+          <span aria-hidden="true">{h.emoji}</span> {h.name}
+          {h.type === 'number' ? `: ${values[h.id]} ${h.unit}` : ''}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function EntryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getEntryById, deleteEntry } = useEntriesContext();
+  const { getEntryById, deleteEntry, habitConfig } = useEntriesContext();
   const entry = getEntryById(id);
 
   if (!entry) {
@@ -79,6 +96,8 @@ export function EntryDetail() {
               </span>
             )}
           </div>
+          <SkyDetails data={entry} date={entry.date} />
+          <HabitChips values={entry.habits} habits={allHabits(habitConfig)} />
 
           {entry.tags?.length > 0 && (
             <div className={styles.tags}>

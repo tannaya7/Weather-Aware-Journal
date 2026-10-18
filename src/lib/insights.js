@@ -1,4 +1,5 @@
 import { MOODS } from './moods.js';
+import { moonPhase } from './sky.js';
 
 // How good each mood feels, for averaging mood over time: positive moods
 // above 0, low moods below. Averages are always shown next to a plain
@@ -106,4 +107,64 @@ export function onThisDay(entries, today = new Date()) {
     )
     .sort((a, b) => b.d - a.d)
     .map(({ entry, d }) => ({ entry, yearsAgo: today.getFullYear() - d.getFullYear() }));
+}
+
+// --- Mood by other factors (daylight, air, moon) ---------------------------
+
+const FACTOR_BUCKETS = {
+  daylight: {
+    value: (e) => (typeof e.daylightHours === 'number' ? e.daylightHours : null),
+    buckets: [
+      { label: 'Under 10 hours', test: (h) => h < 10 },
+      { label: '10–12 hours', test: (h) => h >= 10 && h < 12 },
+      { label: '12–14 hours', test: (h) => h >= 12 && h < 14 },
+      { label: '14+ hours', test: (h) => h >= 14 },
+    ],
+  },
+  air: {
+    value: (e) => (typeof e.airQuality === 'number' ? e.airQuality : null),
+    buckets: [
+      { label: 'Good air', test: (a) => a <= 50 },
+      { label: 'Moderate air', test: (a) => a > 50 && a <= 100 },
+      { label: 'Unhealthy air', test: (a) => a > 100 },
+    ],
+  },
+  moon: {
+    // Position in the lunar cycle; see sky.js.
+    value: (e) => (e.moonFraction === undefined ? null : e.moonFraction),
+    buckets: [
+      { label: '🌑 New moon', test: (f) => f < 0.0625 || f >= 0.9375 },
+      { label: '🌒 Waxing', test: (f) => f >= 0.0625 && f < 0.4375 },
+      { label: '🌕 Full moon', test: (f) => f >= 0.4375 && f < 0.5625 },
+      { label: '🌘 Waning', test: (f) => f >= 0.5625 && f < 0.9375 },
+    ],
+  },
+};
+
+// Average mood per bucket of a factor, keeping only buckets with entries.
+// Entries need a mood and a value for the factor; `withMoon` adds the moon
+// position (from the date) so the moon factor works on any entry.
+export function moodByFactor(entries, factor, withMoon = (e) => e) {
+  const { value, buckets } = FACTOR_BUCKETS[factor];
+  const stats = buckets.map((b) => ({ label: b.label, total: 0, count: 0 }));
+
+  for (const raw of entries) {
+    const entry = withMoon(raw);
+    const score = MOOD_SCORES[entry.mood];
+    const v = value(entry);
+    if (score === undefined || v === null) continue;
+    const index = buckets.findIndex((b) => b.test(v));
+    if (index < 0) continue;
+    stats[index].total += score;
+    stats[index].count += 1;
+  }
+
+  return stats
+    .filter((s) => s.count > 0)
+    .map((s) => ({ label: s.label, average: s.total / s.count, count: s.count }));
+}
+
+export function withMoonFraction(entry) {
+  if (!entry.date || isNaN(new Date(entry.date))) return entry;
+  return { ...entry, moonFraction: moonPhase(entry.date).fraction };
 }

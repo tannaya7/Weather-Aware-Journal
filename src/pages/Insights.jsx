@@ -3,9 +3,11 @@ import { Header } from '../components/Header/Header.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { MoodTrendChart } from '../components/Charts/MoodTrendChart.jsx';
 import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.jsx';
+import { MoodDotRows } from '../components/Charts/MoodDotRows.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
-import { moodByTemperature, weeklyMoodTrend } from '../lib/insights.js';
+import { moodByFactor, moodByTemperature, weeklyMoodTrend, withMoonFraction } from '../lib/insights.js';
+import { enabledHabits, habitMoodEffects } from '../lib/habits.js';
 import { emojiForMood } from '../lib/moods.js';
 import styles from './Insights.module.css';
 
@@ -34,7 +36,7 @@ function StatTile({ label, value, detail }) {
 }
 
 export function Insights() {
-  const { entries } = useEntriesContext();
+  const { entries, habitConfig } = useEntriesContext();
   const [weeks, setWeeks] = useState(26);
 
   const trend = useMemo(() => weeklyMoodTrend(entries, { weeks }), [entries, weeks]);
@@ -45,6 +47,23 @@ export function Insights() {
     entries.filter((e) => e.date && !isNaN(new Date(e.date))).map((e) => new Date(e.date).toDateString()),
   ).size;
   const hasTrend = trend.some((d) => d.count > 0);
+
+  // A factor is worth showing once at least two of its buckets have entries.
+  const factors = useMemo(
+    () =>
+      [
+        { key: 'daylight', title: 'Hours of daylight' },
+        { key: 'air', title: 'Air quality' },
+        { key: 'moon', title: 'Moon phase' },
+      ]
+        .map((f) => ({ ...f, rows: moodByFactor(entries, f.key, withMoonFraction) }))
+        .filter((f) => f.rows.length >= 2),
+    [entries],
+  );
+  const habitEffects = useMemo(
+    () => habitMoodEffects(entries, enabledHabits(habitConfig)),
+    [entries, habitConfig],
+  );
 
   return (
     <>
@@ -114,6 +133,63 @@ export function Insights() {
                 <MoodTemperatureChart data={byTemp} />
               ) : (
                 <p className={styles.empty}>Add weather to a few entries with a mood to see this.</p>
+              )}
+            </section>
+
+            <section className={styles.card} aria-labelledby="sky-heading">
+              <h2 id="sky-heading" className={styles.heading}>
+                Sun, air, and moon
+              </h2>
+              <p className={styles.sub}>Average mood by the day&apos;s daylight, air quality, and moon</p>
+              {factors.length > 0 ? (
+                factors.map((f) => (
+                  <div key={f.key} className={styles.factor}>
+                    <h3 className={styles.factorHeading}>{f.title}</h3>
+                    <MoodDotRows
+                      rows={f.rows.map((r) => ({
+                        key: r.label,
+                        label: r.label,
+                        points: [{ average: r.average, days: r.count }],
+                      }))}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p className={styles.empty}>
+                  Entries with weather from a place now also save daylight and air quality. Once a
+                  few have a mood, the patterns show here.
+                </p>
+              )}
+            </section>
+
+            <section className={styles.card} aria-labelledby="habits-heading">
+              <h2 id="habits-heading" className={styles.heading}>
+                Habits and mood
+              </h2>
+              <p className={styles.sub}>
+                Average mood on days you did more vs. less of each habit. This shows what tends to go
+                together, not what causes what.
+              </p>
+              {habitEffects.length > 0 ? (
+                <MoodDotRows
+                  legend={[
+                    { kind: 'filled', label: 'Days with / more' },
+                    { kind: 'hollow', label: 'Days without / less' },
+                  ]}
+                  rows={habitEffects.map((e) => ({
+                    key: e.habit.id,
+                    label: `${e.habit.emoji} ${e.habit.name}`,
+                    points: [
+                      { name: e.high.label, average: e.high.average, days: e.high.days },
+                      { name: e.low.label, average: e.low.average, days: e.low.days },
+                    ],
+                  }))}
+                />
+              ) : (
+                <p className={styles.empty}>
+                  Log habits with a mood on at least 3 days each way (with and without, or more and
+                  less), and the comparison shows here.
+                </p>
               )}
             </section>
           </>

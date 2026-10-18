@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Insights } from '../../src/pages/Insights.jsx';
 import { Dashboard } from '../../src/pages/Dashboard.jsx';
+import { describeMood, weeklyMoodTrend } from '../../src/lib/insights.js';
 import { renderWithJournal, seedEntries } from '../helpers/journal.jsx';
 
 function daysAgo(n, hour = 12) {
@@ -51,25 +52,33 @@ describe('Insights page', () => {
     await seedEntries(ENTRIES);
     await renderWithJournal(<Insights />);
 
+    // Which weeks the entries land in depends on today's weekday, so the
+    // expected counts come from the same calculation.
+    const weeksWithEntries = (weeks) => weeklyMoodTrend(ENTRIES, { weeks }).filter((w) => w.count).length;
     const trend = screen.getByRole('region', { name: 'Mood over time' });
     const rows = () => within(trend).getAllByRole('row').slice(1);
-    expect(rows()).toHaveLength(2); // the 200-day-old entry is outside 6 months
+    expect(rows()).toHaveLength(weeksWithEntries(26));
 
     await user.click(within(trend).getByRole('button', { name: '1 year' }));
     expect(within(trend).getByRole('button', { name: '1 year' })).toHaveAttribute('aria-pressed', 'true');
-    expect(rows()).toHaveLength(3);
+    expect(rows()).toHaveLength(weeksWithEntries(52));
+    expect(weeksWithEntries(52)).toBeGreaterThan(weeksWithEntries(26)); // the 200-day-old entry
   });
 
   it('reads each week with the arrow keys', async () => {
     await seedEntries(ENTRIES);
     await renderWithJournal(<Insights />);
 
+    const trend = weeklyMoodTrend(ENTRIES, { weeks: 26 });
+    const last = trend.map((w) => w.count > 0).lastIndexOf(true);
+    const label = (week) => (week.count ? describeMood(week.average) : 'No entries');
+
     const chart = screen.getByRole('img', { name: /average mood per week/i });
     fireEvent.focus(chart);
-    expect(screen.getByRole('status')).toHaveTextContent(/great \(\+2\.0\)/i);
+    expect(screen.getByRole('status')).toHaveTextContent(label(trend[last]));
 
     fireEvent.keyDown(chart, { key: 'ArrowLeft' });
-    expect(screen.getByRole('status')).toHaveTextContent(/low \(-2\.0\)|no entries/i);
+    expect(screen.getByRole('status')).toHaveTextContent(label(trend[last - 1]));
   });
 
   it('shows the average temperature for each mood', async () => {

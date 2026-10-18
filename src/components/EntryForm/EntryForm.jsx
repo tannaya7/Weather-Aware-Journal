@@ -9,6 +9,9 @@ import { DictationButton } from '../DictationButton/DictationButton.jsx';
 import { MOODS } from '../../lib/moods.js';
 import { readImageFile } from '../../lib/imageUpload.js';
 import { MAX_PHOTOS, getEntryImages } from '../../lib/entryImages.js';
+import { pickSky } from '../../lib/sky.js';
+import { cleanHabitValues } from '../../lib/habits.js';
+import { HabitFields } from '../HabitFields/HabitFields.jsx';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -29,6 +32,7 @@ function weatherOf(entry) {
         locationName: entry.locationName,
         latitude: entry.latitude,
         longitude: entry.longitude,
+        ...pickSky(entry),
       }
     : null;
 }
@@ -44,7 +48,18 @@ function formValuesOf(entry) {
     font: entry?.font || 'default',
     location: entry?.locationName || '',
     weather: weatherOf(entry),
+    habits: entry?.habits || {},
   };
+}
+
+// The tracked habits' current values, plus whatever the entry already had
+// for habits that are no longer tracked (so turning a habit off in
+// Settings never erases old data).
+function mergeHabits(saved, values, habits) {
+  const tracked = new Set(habits.map((h) => h.id));
+  const untracked = Object.fromEntries(Object.entries(saved || {}).filter(([id]) => !tracked.has(id)));
+  const merged = { ...untracked, ...cleanHabitValues(values, habits) };
+  return Object.keys(merged).length ? merged : undefined;
 }
 
 function formatSavedAt(timestamp) {
@@ -55,7 +70,15 @@ function formatSavedAt(timestamp) {
 // fills the form instead of initialEntry. onDraftChange receives the form's
 // values as they change (or null when there's nothing to keep), and
 // onDiscardDraft resets the form to the saved entry.
-export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, onDiscardDraft }) {
+export function EntryForm({
+  mode,
+  initialEntry,
+  onSubmit,
+  draft,
+  onDraftChange,
+  onDiscardDraft,
+  habits = [],
+}) {
   const isEdit = mode === 'edit';
   const { announce } = useAnnouncer();
 
@@ -68,6 +91,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
   const [tagsRaw, setTagsRaw] = useState(start.tagsRaw);
   const [font, setFont] = useState(start.font);
   const [location, setLocation] = useState(start.location);
+  const [habitValues, setHabitValues] = useState(start.habits || {});
   const [contentError, setContentError] = useState(false);
   const [images, setImages] = useState(() => getEntryImages(initialEntry));
   const [imageError, setImageError] = useState('');
@@ -79,7 +103,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
   );
 
   const { stop: stopAutosave } = useDraftAutosave(
-    { content, mood, date, tagsRaw, font, location, weather: weather || null },
+    { content, mood, date, tagsRaw, font, location, weather: weather || null, habits: habitValues },
     baseline,
     (values, meta) => onDraftChange?.(values && { ...values, savedAt: Date.now() }, meta),
   );
@@ -134,6 +158,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
       mood,
       date: date || toDatetimeLocal(),
       tags,
+      habits: mergeHabits(initialEntry?.habits, habitValues, habits),
       font,
       images: images.length ? images : undefined,
       image: undefined, // replaced by `images`; clears it on older entries
@@ -145,6 +170,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
       locationName: weather?.locationName || location.trim() || undefined,
       latitude: weather?.latitude,
       longitude: weather?.longitude,
+      ...pickSky(weather),
     });
     if (saved === false) {
       setSaving(false);
@@ -249,6 +275,8 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
           onChange={(e) => setDate(e.target.value)}
         />
       </div>
+
+      <HabitFields habits={habits} values={habitValues} onChange={setHabitValues} />
 
       <WeatherBox
         location={location}
