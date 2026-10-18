@@ -5,9 +5,13 @@ import { useWeather } from '../../hooks/useWeather.js';
 import { useDraftAutosave } from '../../hooks/useDraftAutosave.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 import { WritingPrompt } from '../WritingPrompt/WritingPrompt.jsx';
+import { DictationButton } from '../DictationButton/DictationButton.jsx';
 import { MOODS } from '../../lib/moods.js';
 import { readImageFile } from '../../lib/imageUpload.js';
 import { MAX_PHOTOS, getEntryImages } from '../../lib/entryImages.js';
+import { pickSky } from '../../lib/sky.js';
+import { cleanHabitValues } from '../../lib/habits.js';
+import { HabitFields } from '../HabitFields/HabitFields.jsx';
 import styles from './EntryForm.module.css';
 
 function toDatetimeLocal(value) {
@@ -26,6 +30,9 @@ function weatherOf(entry) {
         humidity: entry.humidity,
         windSpeed: entry.windSpeed,
         locationName: entry.locationName,
+        latitude: entry.latitude,
+        longitude: entry.longitude,
+        ...pickSky(entry),
       }
     : null;
 }
@@ -41,7 +48,18 @@ function formValuesOf(entry) {
     font: entry?.font || 'default',
     location: entry?.locationName || '',
     weather: weatherOf(entry),
+    habits: entry?.habits || {},
   };
+}
+
+// The tracked habits' current values, plus whatever the entry already had
+// for habits that are no longer tracked (so turning a habit off in
+// Settings never erases old data).
+function mergeHabits(saved, values, habits) {
+  const tracked = new Set(habits.map((h) => h.id));
+  const untracked = Object.fromEntries(Object.entries(saved || {}).filter(([id]) => !tracked.has(id)));
+  const merged = { ...untracked, ...cleanHabitValues(values, habits) };
+  return Object.keys(merged).length ? merged : undefined;
 }
 
 function formatSavedAt(timestamp) {
@@ -52,7 +70,15 @@ function formatSavedAt(timestamp) {
 // fills the form instead of initialEntry. onDraftChange receives the form's
 // values as they change (or null when there's nothing to keep), and
 // onDiscardDraft resets the form to the saved entry.
-export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, onDiscardDraft }) {
+export function EntryForm({
+  mode,
+  initialEntry,
+  onSubmit,
+  draft,
+  onDraftChange,
+  onDiscardDraft,
+  habits = [],
+}) {
   const isEdit = mode === 'edit';
   const { announce } = useAnnouncer();
 
@@ -65,18 +91,21 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
   const [tagsRaw, setTagsRaw] = useState(start.tagsRaw);
   const [font, setFont] = useState(start.font);
   const [location, setLocation] = useState(start.location);
+  const [habitValues, setHabitValues] = useState(start.habits || {});
   const [contentError, setContentError] = useState(false);
   const [images, setImages] = useState(() => getEntryImages(initialEntry));
   const [imageError, setImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  const { weather, status, statusMessage, fetchForCity } = useWeather(start.weather);
+  const { weather, status, statusMessage, fetchForCity, fetchForCurrentLocation } = useWeather(
+    start.weather,
+  );
 
   const { stop: stopAutosave } = useDraftAutosave(
-    { content, mood, date, tagsRaw, font, location, weather: weather || null },
+    { content, mood, date, tagsRaw, font, location, weather: weather || null, habits: habitValues },
     baseline,
-    (values) => onDraftChange?.(values && { ...values, savedAt: Date.now() }),
+    (values, meta) => onDraftChange?.(values && { ...values, savedAt: Date.now() }, meta),
   );
 
   async function handleImageChange(e) {
@@ -129,6 +158,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
       mood,
       date: date || toDatetimeLocal(),
       tags,
+      habits: mergeHabits(initialEntry?.habits, habitValues, habits),
       font,
       images: images.length ? images : undefined,
       image: undefined, // replaced by `images`; clears it on older entries
@@ -138,6 +168,9 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
       humidity: weather?.humidity,
       windSpeed: weather?.windSpeed,
       locationName: weather?.locationName || location.trim() || undefined,
+      latitude: weather?.latitude,
+      longitude: weather?.longitude,
+      ...pickSky(weather),
     });
     if (saved === false) {
       setSaving(false);
@@ -146,6 +179,18 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
 
     stopAutosave();
     announce(isEdit ? 'Journal entry updated successfully.' : 'Journal entry saved.', 'assertive');
+  }
+
+  // Dictated phrases are added at the end: on the current line after a
+  // space, or right on a fresh line (e.g. under a writing prompt).
+  function handleDictatedText(text) {
+    if (!text) return;
+    setContent((current) => {
+      if (!current.trim()) return text;
+      if (current.endsWith('\n')) return current + text;
+      return `${current.replace(/[ \t]+$/, '')} ${text}`;
+    });
+    setContentError(false);
   }
 
   // The prompt becomes the entry's first line (and so its title), with the
@@ -175,6 +220,7 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
         </div>
       )}
       {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
+      <DictationButton onText={handleDictatedText} />
       <label className="sr-only" htmlFor="contentInput">
         What&apos;s on your mind?
       </label>
@@ -230,13 +276,17 @@ export function EntryForm({ mode, initialEntry, onSubmit, draft, onDraftChange, 
         />
       </div>
 
+      <HabitFields habits={habits} values={habitValues} onChange={setHabitValues} />
+
       <WeatherBox
         location={location}
         onLocationChange={setLocation}
         weather={weather}
         status={status}
         statusMessage={statusMessage}
-        onFetch={() => fetchForCity(location)}
+        date={date}
+        onFetch={() => fetchForCity(location, date)}
+        onUseLocation={() => fetchForCurrentLocation(date)}
       />
 
       <div className={styles.field}>

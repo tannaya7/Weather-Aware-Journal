@@ -1,4 +1,15 @@
-import { PBKDF2_ITERATIONS, decryptJson, deriveKey, encryptJson, randomBytes } from './crypto.js';
+import {
+  PBKDF2_ITERATIONS,
+  decryptJson,
+  deriveKey,
+  deriveWrappingKey,
+  encryptJson,
+  generateDataKey,
+  randomBytes,
+  unwrapDataKey,
+  wrapDataKey,
+  wrappingKeyFromSecret,
+} from './crypto.js';
 
 // Journal storage lives in IndexedDB: one record per entry, so saving only
 // writes what changed, and the quota is far larger than localStorage's ~5MB
@@ -190,6 +201,7 @@ export async function saveEntries(next, prev = [], key = null) {
 // Drafts are dropped too, so none is left behind unencrypted or under an
 // old passcode.
 async function rewriteAll(entries, key, lockRecord) {
+  clearRescuedDrafts();
   const records = await Promise.all(entries.map((entry) => toRecord(entry, key)));
   await transact([ENTRIES, META], 'readwrite', ({ entries: store, meta }) => {
     store.clear();
@@ -199,36 +211,95 @@ async function rewriteAll(entries, key, lockRecord) {
   });
 }
 
-async function makeLock(passcode) {
+// Lock record, version 2: entries are encrypted with a random data key,
+// stored wrapped by the passcode (and optionally a passkey). Version 1
+// (before passkeys) encrypted entries with the passcode-derived key itself;
+// it's upgraded the first time it's unlocked.
+const LOCK_VERSION = 2;
+
+async function wrapForPasscode(dataKey, passcode) {
   const salt = randomBytes(16);
-  const key = await deriveKey(passcode, salt, PBKDF2_ITERATIONS);
-  const check = await encryptJson(key, LOCK_CHECK);
-  return { key, record: { key: LOCK_KEY, salt, iterations: PBKDF2_ITERATIONS, check } };
+  const wrappingKey = await deriveWrappingKey(passcode, salt, PBKDF2_ITERATIONS);
+  return { salt, iterations: PBKDF2_ITERATIONS, wrapped: await wrapDataKey(dataKey, wrappingKey) };
 }
 
-// Turns the lock on (or changes the passcode) and returns the new key.
+async function writeLockRecord(record) {
+  await transact([META], 'readwrite', ({ meta }) => meta.put(record));
+}
+
+// Turns the lock on: a new data key encrypts every entry. Returns the key.
 export async function setPasscode(passcode, entries) {
-  const { key, record } = await makeLock(passcode);
-  await rewriteAll(entries, key, record);
-  return key;
+  const dataKey = await generateDataKey();
+  const record = {
+    key: LOCK_KEY,
+    version: LOCK_VERSION,
+    passcode: await wrapForPasscode(dataKey, passcode),
+    passkey: null,
+  };
+  await rewriteAll(entries, dataKey, record);
+  return dataKey;
+}
+
+// Changes the passcode by re-wrapping the data key: entries aren't touched,
+// and a passkey keeps working.
+export async function changePasscode(dataKey, newPasscode) {
+  const lock = await getLockInfo();
+  await writeLockRecord({ ...lock, passcode: await wrapForPasscode(dataKey, newPasscode) });
 }
 
 export async function removePasscode(entries) {
   await rewriteAll(entries, null, null);
 }
 
-// Returns the key for `passcode`, or throws WrongPasscodeError.
+async function unlockVersion1(lock, passcode) {
+  const key = await deriveKey(passcode, lock.salt, lock.iterations);
+  try {
+    if ((await decryptJson(key, lock.check)) !== LOCK_CHECK) throw new Error();
+  } catch {
+    throw new WrongPasscodeError();
+  }
+  // Upgrade: re-encrypt under a new data key, wrapped by the same passcode.
+  const entries = await loadEntries(key);
+  return setPasscode(passcode, entries);
+}
+
+// Returns the data key for `passcode`, or throws WrongPasscodeError.
 export async function unlock(passcode) {
   const lock = await getLockInfo();
   if (!lock) throw new Error('The journal is not locked.');
+  if (lock.version !== LOCK_VERSION) return unlockVersion1(lock, passcode);
 
-  const key = await deriveKey(passcode, lock.salt, lock.iterations);
+  const { salt, iterations, wrapped } = lock.passcode;
+  const wrappingKey = await deriveWrappingKey(passcode, salt, iterations);
   try {
-    if ((await decryptJson(key, lock.check)) === LOCK_CHECK) return key;
+    return await unwrapDataKey(wrapped, wrappingKey);
   } catch {
-    // Wrong key: AES-GCM authentication fails.
+    throw new WrongPasscodeError();
   }
-  throw new WrongPasscodeError();
+}
+
+// --- Passkey unlock (see lib/passkey.js for the WebAuthn side) ---
+
+// Stores the data key wrapped by a passkey's PRF secret.
+export async function addPasskey(dataKey, { credentialId, prfSalt, secret }) {
+  const lock = await getLockInfo();
+  const wrapped = await wrapDataKey(dataKey, await wrappingKeyFromSecret(secret));
+  await writeLockRecord({ ...lock, passkey: { credentialId, prfSalt, wrapped } });
+}
+
+export async function removePasskey() {
+  const lock = await getLockInfo();
+  await writeLockRecord({ ...lock, passkey: null });
+}
+
+export async function unlockWithPasskeySecret(secret) {
+  const lock = await getLockInfo();
+  if (!lock?.passkey) throw new Error('No passkey is set up.');
+  try {
+    return await unwrapDataKey(lock.passkey.wrapped, await wrappingKeyFromSecret(secret));
+  } catch {
+    throw new Error("That passkey couldn't unlock the journal.");
+  }
 }
 
 // For a forgotten passcode: the only way back in is to start over.
@@ -239,8 +310,59 @@ export async function eraseJournal() {
   });
 }
 
+// --- Draft rescue copies ---
+// IndexedDB writes are async, so one started as the tab closes can be cut
+// off, losing the last second of typing. As a backstop, the draft is also
+// written synchronously to localStorage at that moment, and moved into
+// IndexedDB on the next visit. Only while the lock is off: these copies are
+// plain text, so they're never written for a locked journal, and any left
+// over are deleted when a passcode is set.
+const RESCUE_PREFIX = 'weatherJournalDraft:';
+
+export function rescueDraft(draftId, value) {
+  try {
+    localStorage.setItem(RESCUE_PREFIX + draftId, JSON.stringify(value));
+  } catch {
+    // Storage blocked or full: the IndexedDB save is still attempted.
+  }
+}
+
+function takeRescuedDraft(draftId) {
+  try {
+    const raw = localStorage.getItem(RESCUE_PREFIX + draftId);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearRescuedDrafts(draftId = null) {
+  try {
+    if (draftId !== null) {
+      localStorage.removeItem(RESCUE_PREFIX + draftId);
+      return;
+    }
+    for (const name of Object.keys(localStorage)) {
+      if (name.startsWith(RESCUE_PREFIX)) localStorage.removeItem(name);
+    }
+  } catch {
+    // Nothing to clean up if storage is blocked.
+  }
+}
+
 // Drafts share the meta store, and are encrypted too when the lock is on.
 export async function loadDraft(draftId, key = null) {
+  if (key) {
+    clearRescuedDrafts(draftId);
+  } else {
+    const rescued = takeRescuedDraft(draftId);
+    if (rescued) {
+      await saveDraft(draftId, rescued);
+      clearRescuedDrafts(draftId);
+      return rescued;
+    }
+  }
+
   const db = await openDb();
   let record;
   try {
@@ -266,7 +388,36 @@ export async function saveDraft(draftId, value, key = null) {
 }
 
 export async function clearDraft(draftId) {
+  clearRescuedDrafts(draftId);
   await transact([META], 'readwrite', ({ meta }) => meta.delete(`draft:${draftId}`));
+}
+
+// Small app settings (e.g. which habits to track) live in the meta store
+// too, encrypted like drafts when the lock is on. Changing the lock clears
+// the meta store, so useEntries saves settings again right after.
+export async function loadSetting(name, key = null) {
+  const db = await openDb();
+  let record;
+  try {
+    const tx = db.transaction(META, 'readonly');
+    record = await promisify(tx.objectStore(META).get(`setting:${name}`));
+  } finally {
+    db.close();
+  }
+  if (!record) return null;
+  if (!key) return record.value ?? null;
+  try {
+    return await decryptJson(key, record);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveSetting(name, value, key = null) {
+  const record = key
+    ? { key: `setting:${name}`, ...(await encryptJson(key, value)) }
+    : { key: `setting:${name}`, value };
+  await transact([META], 'readwrite', ({ meta }) => meta.put(record));
 }
 
 // Asks the browser not to clear the journal when the device runs low on

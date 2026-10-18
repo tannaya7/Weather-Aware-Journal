@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { buildExportFilename, serializeEntries } from '../../lib/exportImport.js';
+import { readFileAsText } from '../../lib/backup.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
 
 export function ExportImportControls({ entries, onImport }) {
@@ -30,7 +31,7 @@ export function ExportImportControls({ entries, onImport }) {
     if (!file) return;
 
     try {
-      const text = await file.text();
+      const text = await readFileAsText(file);
       const result = await onImport(text);
       announce(
         `Imported ${result.importedCount} entr${result.importedCount === 1 ? 'y' : 'ies'}.${

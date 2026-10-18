@@ -1,17 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
 import { EntryForm } from '../components/EntryForm/EntryForm.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
+import { enabledHabits } from '../lib/habits.js';
 import styles from './EntryFormPage.module.css';
 
 export function EntryFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addEntry, updateEntry, getEntryById, loadDraft, saveDraft, clearDraft } =
+  const { addEntry, updateEntry, getEntryById, loadDraft, saveDraft, clearDraft, habitConfig } =
     useEntriesContext();
+  const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
 
   const [saveError, setSaveError] = useState('');
   const saveErrorRef = useRef(null);
@@ -40,8 +42,8 @@ export function EntryFormPage() {
   }, [saveError]);
 
   const handleDraftChange = useCallback(
-    (value) => {
-      const write = value ? saveDraft(draftId, value) : clearDraft(draftId);
+    (value, meta) => {
+      const write = value ? saveDraft(draftId, value, meta) : clearDraft(draftId);
       write.catch((error) => console.warn('Could not save the draft', error));
     },
     [draftId, saveDraft, clearDraft],
@@ -107,6 +109,7 @@ export function EntryFormPage() {
             onDraftChange={handleDraftChange}
             onDiscardDraft={handleDiscardDraft}
             onSubmit={handleSubmit}
+            habits={habits}
           />
         )}
       </div>

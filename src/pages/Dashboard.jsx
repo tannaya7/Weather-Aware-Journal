@@ -13,6 +13,7 @@ import { ExportImportControls } from '../components/ExportImportControls/ExportI
 import { MoodWeatherChart } from '../components/MoodWeatherChart/MoodWeatherChart.jsx';
 import { ImageGallery } from '../components/ImageGallery/ImageGallery.jsx';
 import { StreakCard } from '../components/StreakCard/StreakCard.jsx';
+import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { isSameDay } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
@@ -130,6 +131,7 @@ export function Dashboard() {
         <FilterChips options={filterOptions} filters={filters} onChange={handleFiltersChange} />
 
         <StreakCard entries={entries} />
+        <OnThisDay entries={entries} />
         <MoodWeatherChart entries={entries} />
         <ImageGallery entries={entries} />
 

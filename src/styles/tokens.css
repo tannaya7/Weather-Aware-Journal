@@ -12,6 +12,11 @@
   --color-border: #4a381f;
   --color-accent: #dda15e;
   --color-accent-strong: #c98a3f;
+  /* Chart marks (lines, bars, dots): the accent, one step darker in dark
+     mode so it sits inside the validated chart lightness band. */
+  --color-chart: #b8772f;
+  --color-chart-wash: rgba(184, 119, 47, 0.12);
+  --color-grid: #3a2c1a;
   /* Text color placed ON TOP of --color-accent fills (buttons, chips). Amber
      is too light for white text to pass contrast, so dark ink is used here. */
   --color-on-accent: #1b140d;
@@ -58,6 +63,9 @@
   --color-border: #e2d3b8;
   --color-accent: #a8571f;
   --color-accent-strong: #8c4718;
+  --color-chart: #a8571f;
+  --color-chart-wash: rgba(168, 87, 31, 0.1);
+  --color-grid: #ece2cf;
   --color-on-accent: #ffffff;
   --color-text: #2b2018;
   --color-text-muted: #7c6b54;

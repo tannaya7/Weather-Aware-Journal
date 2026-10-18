@@ -132,3 +132,28 @@ textarea {
   max-width: 440px;
   color: var(--color-text-muted);
 }
+
+/* Printing the journal (Export page): while body has .printing-journal,
+   only the .print-area is printed, on plain white paper. Printing any
+   other page is unaffected. */
+@media print {
+  body.printing-journal {
+    background: #fff;
+  }
+
+  body.printing-journal * {
+    visibility: hidden;
+  }
+
+  body.printing-journal .print-area,
+  body.printing-journal .print-area * {
+    visibility: visible;
+  }
+
+  body.printing-journal .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
