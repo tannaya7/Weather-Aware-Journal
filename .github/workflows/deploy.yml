@@ -30,6 +30,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Optional sync/AI/reminder server (worker/README.md). Set the
+          # SERVER_URL repository variable to turn those features on.
+          VITE_SERVER_URL: ${{ vars.SERVER_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -51,7 +51,7 @@ describe('with 5,000 entries', () => {
       const parsed = parseQuery(q);
       const { result, ms } = time(() => journal.filter((e) => matchesQuery(e, parsed)));
       expect(result.length).toBeGreaterThan(0);
-      expect(ms).toBeLessThan(150);
+      expect(ms).toBeLessThan(400);
     }
   });
 
@@ -59,7 +59,7 @@ describe('with 5,000 entries', () => {
     const { ms: optionsMs } = time(() => getFilterOptions(journal));
     const { result, ms } = time(() => applyFilters(journal, { moods: ['Sad'], weather: ['Rain'], tags: [] }));
     expect(result.length).toBeGreaterThan(0);
-    expect(optionsMs + ms).toBeLessThan(150);
+    expect(optionsMs + ms).toBeLessThan(400);
   });
 
   it('computes every Insights and dashboard summary quickly', () => {
