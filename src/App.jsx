@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AnnouncerProvider } from './context/AnnouncerContext.jsx';
@@ -11,12 +11,17 @@ import { EntryFormPage } from './pages/EntryFormPage.jsx';
 import { EntryDetail } from './pages/EntryDetail.jsx';
 import { Calendar } from './pages/Calendar.jsx';
 import { Contact } from './pages/Contact.jsx';
-import { Settings } from './pages/Settings.jsx';
-import { Insights } from './pages/Insights.jsx';
-import { ExportPage } from './pages/ExportPage.jsx';
 
-// Leaflet is the app's biggest dependency, so the map loads only when opened.
-const MapPage = lazy(() => import('./pages/MapPage.jsx').then((m) => ({ default: m.MapPage })));
+// Pages you don't need on every visit load only when opened, which keeps
+// the first load small: the map (Leaflet is the biggest dependency),
+// Insights' charts, Export's drawing and backups, and Settings' passkeys.
+function lazyPage(load, name) {
+  return lazy(() => load().then((m) => ({ default: m[name] })));
+}
+const MapPage = lazyPage(() => import('./pages/MapPage.jsx'), 'MapPage');
+const Insights = lazyPage(() => import('./pages/Insights.jsx'), 'Insights');
+const ExportPage = lazyPage(() => import('./pages/ExportPage.jsx'), 'ExportPage');
+const Settings = lazyPage(() => import('./pages/Settings.jsx'), 'Settings');
 
 export function App() {
   return (
@@ -33,14 +38,7 @@ export function App() {
                 <Route path="/entry/:id" element={<EntryDetail />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/insights" element={<Insights />} />
-                <Route
-                  path="/map"
-                  element={
-                    <Suspense fallback={<p className="container">Loading the map…</p>}>
-                      <MapPage />
-                    </Suspense>
-                  }
-                />
+                <Route path="/map" element={<MapPage />} />
                 <Route path="/export" element={<ExportPage />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/settings" element={<Settings />} />
