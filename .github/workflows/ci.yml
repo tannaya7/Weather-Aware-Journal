@@ -50,21 +50,32 @@ jobs:
   visual:
     name: Visual comparison
     runs-on: ubuntu-latest
-    # Pictures are compared against baselines made on the same platform.
-    # Until Linux baselines are committed (run the "Update visual baselines"
-    # workflow), there is nothing to compare against, so this is skipped.
-    if: ${{ hashFiles('e2e/visual.spec.js-snapshots/*-linux.png') != '' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Pictures are compared against baselines made on the same platform.
+      # Until Linux baselines are committed (run the "Update visual baselines"
+      # workflow), there is nothing to compare against, so the rest is
+      # skipped. (hashFiles() only works in steps, not in a job's `if`.)
+      - id: baselines
+        run: |
+          if ls e2e/visual.spec.js-snapshots/*-linux.png >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Linux baselines committed yet; skipping visual comparison."
+          fi
+      - if: steps.baselines.outputs.found == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:visual
+      - if: steps.baselines.outputs.found == 'true'
+        run: npm ci
+      - if: steps.baselines.outputs.found == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.baselines.outputs.found == 'true'
+        run: npm run test:visual
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() && steps.baselines.outputs.found == 'true'
         with:
           name: visual-diffs
           path: test-results
