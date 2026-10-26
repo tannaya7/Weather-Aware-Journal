@@ -71,8 +71,22 @@ test('encrypted backup downloads and restores', async ({ page }) => {
   await page.getByLabel('Backup password').nth(1).fill('correct horse battery');
   await page.getByRole('button', { name: 'Restore' }).click();
 
-  await expect(page.getByText('Restored 2 entries.')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Restored 2 entries.' })).toBeVisible();
   await goTo(page, 'Home');
   await expect(page.getByText('Backed up two')).toBeVisible();
   expect(page.consoleErrors).toEqual([]);
+});
+
+test('the built app ships a content security policy and breaks none of its rules', async ({ page }) => {
+  const violations = [];
+  page.on('console', (msg) => {
+    if (/Content Security Policy/i.test(msg.text())) violations.push(msg.text());
+  });
+  await seedEntries(page, [{ id: 1, content: 'Under policy', date: daysAgo(1) }]);
+  const policy = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+  expect(policy).toContain("object-src 'none'");
+  expect(policy).toContain("default-src 'self'");
+  for (const name of ['Insights', 'Calendar', 'Settings', 'Home']) await goTo(page, name);
+  await expect(page.getByText('Under policy')).toBeVisible();
+  expect(violations).toEqual([]);
 });

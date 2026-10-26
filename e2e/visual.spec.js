@@ -38,6 +38,12 @@ const ENTRIES = [
   { id: 3, content: 'Quiet evening, wrote letters.', mood: 'Peaceful', date: at(5), updatedAt: 1 },
 ];
 
+// Seeding opened the app once, which saved the theme it picked then; forget
+// it so the app follows the color scheme each test asks for.
+async function followSystemTheme(page) {
+  await page.evaluate(() => localStorage.removeItem('weatherJournalTheme'));
+}
+
 test.describe('visual @visual', () => {
   test.skip(({ isMobile }) => isMobile, 'one set of pictures, at desktop size');
 
@@ -50,6 +56,7 @@ test.describe('visual @visual', () => {
 
   test('dashboard, light', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
+    await followSystemTheme(page);
     await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Your Journal' })).toBeVisible();
     await expect(page).toHaveScreenshot('dashboard-light.png', shot);
@@ -57,6 +64,7 @@ test.describe('visual @visual', () => {
 
   test('dashboard, dark', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
+    await followSystemTheme(page);
     await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Your Journal' })).toBeVisible();
     await expect(page).toHaveScreenshot('dashboard-dark.png', shot);
