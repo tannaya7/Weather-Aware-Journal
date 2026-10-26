@@ -2,11 +2,13 @@ import { formatDateLong } from '../../lib/dateFormat.js';
 import { getEntryTitle } from '../../lib/entryTitle.js';
 import { emojiForMood } from '../../lib/moods.js';
 import { getEntryImages } from '../../lib/entryImages.js';
+import { RichText } from '../RichText/RichText.jsx';
 import styles from './PrintJournal.module.css';
 
 // The journal laid out for paper / PDF: a cover, then every entry oldest
 // first, each kept on one page where it fits.
-export function PrintJournal({ entries, title, includePhotos }) {
+// `intro` (optional) is shown on its own page after the cover.
+export function PrintJournal({ entries, title, includePhotos, intro }) {
   const ordered = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
@@ -20,6 +22,8 @@ export function PrintJournal({ entries, title, includePhotos }) {
             ` · ${formatDateLong(ordered[0].date)} – ${formatDateLong(ordered[ordered.length - 1].date)}`}
         </p>
       </header>
+
+      {intro && <section className={styles.intro}>{intro}</section>}
 
       {ordered.map((entry) => {
         const images = includePhotos ? getEntryImages(entry) : [];
@@ -41,7 +45,14 @@ export function PrintJournal({ entries, title, includePhotos }) {
               {entry.locationName && <span>📍 {entry.locationName}</span>}
               {entry.tags?.length > 0 && <span>{entry.tags.map((t) => `#${t}`).join(' ')}</span>}
             </p>
-            <div className={styles.content}>{entry.content}</div>
+            <div className={styles.content}>
+              <RichText text={entry.content} />
+            </div>
+            {entry.audio?.length > 0 && (
+              <p className={styles.meta}>
+                🎙️ {entry.audio.length} {entry.audio.length === 1 ? 'voice memo' : 'voice memos'} (in the app)
+              </p>
+            )}
             {images.length > 0 && (
               <div className={styles.photos}>
                 {images.map((src, i) => (

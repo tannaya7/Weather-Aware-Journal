@@ -11,15 +11,20 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --grep-invert @visual",
+    "check:budgets": "node scripts/check-budgets.mjs",
+    "test:visual": "playwright test e2e/visual.spec.js --project=desktop",
+    "test:visual:update": "playwright test e2e/visual.spec.js --project=desktop --update-snapshots"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.11.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^6.5.0",

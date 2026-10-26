@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import { WeatherBackfill } from '../components/WeatherBackfill/WeatherBackfill.jsx';
 import { HabitSettings } from '../components/HabitSettings/HabitSettings.jsx';
+import { GoalSettings } from '../components/GoalSettings/GoalSettings.jsx';
+import { SemanticSettings } from '../components/SemanticSettings/SemanticSettings.jsx';
+import { StorageSettings } from '../components/StorageSettings/StorageSettings.jsx';
+import { LanguageSettings } from '../components/LanguageSettings/LanguageSettings.jsx';
+import { DiagnosticsSettings } from '../components/DiagnosticsSettings/DiagnosticsSettings.jsx';
+import { SyncSettings } from '../components/SyncSettings/SyncSettings.jsx';
+import { ReminderSettings } from '../components/ReminderSettings/ReminderSettings.jsx';
 import { isPasskeySupported, passkeyErrorMessage } from '../lib/passkey.js';
 import styles from './Settings.module.css';
 
@@ -215,6 +223,7 @@ function PasskeySection({ onDone }) {
 }
 
 export function Settings() {
+  const { t } = useI18n();
   const { lockEnabled } = useEntriesContext();
   const { announce } = useAnnouncer();
   const [message, setMessage] = useState('');
@@ -226,7 +235,7 @@ export function Settings() {
 
   return (
     <>
-      <Header title="Settings" icon="⚙️">
+      <Header title={t('page.settings')} icon="⚙️">
         <ThemeToggle />
       </Header>
 
@@ -261,11 +270,60 @@ export function Settings() {
           )}
         </section>
 
+        <section className={styles.card} aria-labelledby="sync-heading">
+          <h2 id="sync-heading" className={styles.heading}>
+            Sync across devices
+          </h2>
+          <SyncSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="reminder-heading">
+          <h2 id="reminder-heading" className={styles.heading}>
+            Daily reminder
+          </h2>
+          <ReminderSettings />
+        </section>
+
         <section className={styles.card} aria-labelledby="habits-heading">
           <h2 id="habits-heading" className={styles.heading}>
             Habits
           </h2>
           <HabitSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="goals-heading">
+          <h2 id="goals-heading" className={styles.heading}>
+            Weekly goals
+          </h2>
+          <GoalSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="semantic-heading">
+          <h2 id="semantic-heading" className={styles.heading}>
+            Search by meaning
+          </h2>
+          <SemanticSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="diagnostics-heading">
+          <h2 id="diagnostics-heading" className={styles.heading}>
+            Error reports
+          </h2>
+          <DiagnosticsSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="language-heading">
+          <h2 id="language-heading" className={styles.heading}>
+            {t('settings.language')}
+          </h2>
+          <LanguageSettings />
+        </section>
+
+        <section className={styles.card} aria-labelledby="storage-heading">
+          <h2 id="storage-heading" className={styles.heading}>
+            Storage
+          </h2>
+          <StorageSettings />
         </section>
 
         <section className={styles.card} aria-labelledby="backfill-heading">

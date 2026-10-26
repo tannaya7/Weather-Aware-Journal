@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useReviewImage } from '../hooks/useReviewImage.js';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { PrintJournal } from '../components/PrintJournal/PrintJournal.jsx';
 import { BackupSection } from '../components/BackupSection/BackupSection.jsx';
+import { PeriodReview } from '../components/PeriodReview/PeriodReview.jsx';
+import { enabledHabits } from '../lib/habits.js';
+import { toMarkdown } from '../lib/importers.js';
+import { buildExportFilename } from '../lib/exportImport.js';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { useAnnouncer } from '../context/AnnouncerContext.jsx';
 import {
-  REVIEW_SIZE,
   availableYears,
   drawYearReview,
   entriesInYear,
@@ -21,36 +26,6 @@ function count(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-// Renders the year-in-review card to a PNG blob (and a preview URL).
-function useYearReviewImage(summary) {
-  const [image, setImage] = useState(null); // { url, blob }
-
-  useEffect(() => {
-    if (!summary) return undefined;
-    const canvas = document.createElement('canvas');
-    canvas.width = REVIEW_SIZE.width;
-    canvas.height = REVIEW_SIZE.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return undefined;
-
-    let cancelled = false;
-    let url = null;
-    drawYearReview(ctx, summary);
-    canvas.toBlob((blob) => {
-      if (cancelled || !blob) return;
-      url = URL.createObjectURL(blob);
-      setImage({ url, blob });
-    }, 'image/png');
-
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [summary]);
-
-  return image;
-}
-
 function YearInReview({ entries }) {
   const { announce } = useAnnouncer();
   const years = useMemo(() => availableYears(entries), [entries]);
@@ -59,7 +34,7 @@ function YearInReview({ entries }) {
   // page opened (e.g. restoring a backup into an empty journal).
   const year = years.includes(chosenYear) ? chosenYear : years[0];
   const summary = useMemo(() => (year ? yearSummary(entries, year) : null), [entries, year]);
-  const image = useYearReviewImage(summary);
+  const image = useReviewImage(summary, drawYearReview);
   const fileName = `weather-journal-${year}-in-review.png`;
   const file = image && typeof File !== 'undefined' ? new File([image.blob], fileName, { type: 'image/png' }) : null;
   const canShare = Boolean(file && navigator.canShare?.({ files: [file] }));
@@ -137,14 +112,17 @@ function YearInReview({ entries }) {
   );
 }
 
-function PrintSection({ entries }) {
+// `job` (optional) is a review being saved as a PDF from another card on
+// this page: { title, entries, intro }. It is shown in the preview and
+// printed straight away, then onJobDone clears it.
+function PrintSection({ entries, job, onJobDone }) {
   const years = useMemo(() => availableYears(entries), [entries]);
   const [range, setRange] = useState(ALL);
   const [includePhotos, setIncludePhotos] = useState(true);
   const printing = useRef(false);
 
-  const chosen = range === ALL ? entries : entriesInYear(entries, Number(range));
-  const title = range === ALL ? 'My journal' : `My ${range}`;
+  const chosen = job ? job.entries : range === ALL ? entries : entriesInYear(entries, Number(range));
+  const title = job ? job.title : range === ALL ? 'My journal' : `My ${range}`;
 
   // Only the journal is printed while body has this class (see global.css).
   useEffect(() => {
@@ -152,19 +130,25 @@ function PrintSection({ entries }) {
       if (!printing.current) return;
       printing.current = false;
       document.body.classList.remove('printing-journal');
+      onJobDone?.();
     }
     window.addEventListener('afterprint', done);
     return () => {
       window.removeEventListener('afterprint', done);
       document.body.classList.remove('printing-journal');
     };
-  }, []);
+  }, [onJobDone]);
 
   function handlePrint() {
     printing.current = true;
     document.body.classList.add('printing-journal');
     window.print();
   }
+
+  // A review asked for a PDF: the preview has just rendered it, so print.
+  useEffect(() => {
+    if (job) handlePrint();
+  }, [job]); // handlePrint only touches refs and the DOM
 
   return (
     <>
@@ -190,19 +174,25 @@ function PrintSection({ entries }) {
         In the print window, choose <strong>Save as PDF</strong> as the printer. The PDF isn&apos;t
         encrypted, even if your journal has a passcode.
       </p>
-      <div className={styles.printPreview}>
-        <PrintJournal entries={chosen} title={title} includePhotos={includePhotos} />
+      {/* Scrollable, so keyboard users need to be able to focus it to scroll. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region */}
+      <div className={styles.printPreview} role="region" aria-label="Print preview" tabIndex={0}>
+        <PrintJournal entries={chosen} title={title} includePhotos={includePhotos} intro={job?.intro} />
       </div>
     </>
   );
 }
 
 export function ExportPage() {
-  const { entries } = useEntriesContext();
+  const { t } = useI18n();
+  const { entries, habitConfig } = useEntriesContext();
+  const [job, setJob] = useState(null);
+  const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
+  const clearJob = useCallback(() => setJob(null), []);
 
   return (
     <>
-      <Header title="Export & share" icon="📤">
+      <Header title={t('page.export')} icon="📤">
         <ThemeToggle />
       </Header>
 
@@ -212,6 +202,40 @@ export function ExportPage() {
             Year in review
           </h2>
           <YearInReview entries={entries} />
+        </section>
+
+        <section className={styles.card} aria-labelledby="period-heading">
+          <h2 id="period-heading" className={styles.heading}>
+            Weekly &amp; monthly review
+          </h2>
+          <PeriodReview entries={entries} habits={habits} goals={habitConfig.goals} onPrint={setJob} />
+        </section>
+
+        <section className={styles.card} aria-labelledby="markdown-heading">
+          <h2 id="markdown-heading" className={styles.heading}>
+            Markdown
+          </h2>
+          <p className={styles.text}>
+            Every entry in one plain-text file, readable in any notes app, with the date, mood, tags, and weather
+            above each one. It can be imported back here (Import on the home page).
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={entries.length === 0}
+            onClick={() => {
+              const url = URL.createObjectURL(new Blob([toMarkdown(entries)], { type: 'text/markdown' }));
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = buildExportFilename().replace(/\.json$/, '.md');
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Download as Markdown
+          </Button>
         </section>
 
         <section className={styles.card} aria-labelledby="backup-heading">
@@ -228,7 +252,7 @@ export function ExportPage() {
           {entries.length === 0 ? (
             <p className={styles.text}>There&apos;s nothing to print yet.</p>
           ) : (
-            <PrintSection entries={entries} />
+            <PrintSection entries={entries} job={job} onJobDone={clearJob} />
           )}
         </section>
       </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { MiniMonth } from '../components/MiniMonth/MiniMonth.jsx';
 import { YearlyMoodBarGraph } from '../components/YearlyMoodBarGraph/YearlyMoodBarGraph.jsx';
@@ -8,6 +9,7 @@ import { buildDayMoodMap, computeYearlyMoodCounts } from '../lib/calendarStats.j
 import styles from './Calendar.module.css';
 
 export function Calendar() {
+  const { t } = useI18n();
   const { entries } = useEntriesContext();
   const [year, setYear] = useState(() => new Date().getFullYear());
 
@@ -19,7 +21,7 @@ export function Calendar() {
 
   return (
     <>
-      <Header title="Calendar" icon="📅">
+      <Header title={t('page.calendar')} icon="📅">
         <ThemeToggle />
       </Header>
 

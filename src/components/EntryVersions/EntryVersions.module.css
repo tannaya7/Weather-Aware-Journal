@@ -1,0 +1,104 @@
+.conflict {
+  max-width: 760px;
+  margin: var(--space-4) auto 0;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface-raised);
+}
+
+.conflictHeading {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-reading);
+  font-size: 17px;
+  color: var(--color-text);
+}
+
+.note {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.compare {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.compareHeading {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.diff {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* Not color alone: added is underlined, removed is struck through. */
+.added {
+  text-decoration: underline;
+  text-decoration-style: solid;
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.removed {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.history {
+  max-width: 760px;
+  margin: var(--space-5) auto 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.history summary {
+  cursor: pointer;
+  font-family: var(--font-reading);
+  font-size: 16px;
+}
+
+.history summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.versions {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.version {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.versionWhen {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.source {
+  color: var(--color-text-muted);
+}
+
+.preview {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+}

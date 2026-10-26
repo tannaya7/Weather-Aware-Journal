@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { MoodTrendChart } from '../components/Charts/MoodTrendChart.jsx';
 import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.jsx';
 import { MoodDotRows } from '../components/Charts/MoodDotRows.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
+import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { Patterns } from '../components/Patterns/Patterns.jsx';
+import { GoalsProgress } from '../components/GoalsProgress/GoalsProgress.jsx';
+import { MoodOutlook } from '../components/MoodOutlook/MoodOutlook.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { moodByFactor, moodByTemperature, weeklyMoodTrend, withMoonFraction } from '../lib/insights.js';
 import { enabledHabits, habitMoodEffects } from '../lib/habits.js';
@@ -36,6 +41,7 @@ function StatTile({ label, value, detail }) {
 }
 
 export function Insights() {
+  const { t } = useI18n();
   const { entries, habitConfig } = useEntriesContext();
   const [weeks, setWeeks] = useState(26);
 
@@ -60,14 +66,12 @@ export function Insights() {
         .filter((f) => f.rows.length >= 2),
     [entries],
   );
-  const habitEffects = useMemo(
-    () => habitMoodEffects(entries, enabledHabits(habitConfig)),
-    [entries, habitConfig],
-  );
+  const habits = useMemo(() => enabledHabits(habitConfig), [habitConfig]);
+  const habitEffects = useMemo(() => habitMoodEffects(entries, habits), [entries, habits]);
 
   return (
     <>
-      <Header title="Insights" icon="📈">
+      <Header title={t('page.insights')} icon="📈">
         <ThemeToggle />
       </Header>
 
@@ -96,6 +100,20 @@ export function Insights() {
             </div>
 
             <OnThisDay entries={entries} />
+
+            <section className={styles.card} aria-labelledby="reflect-heading">
+              <h2 id="reflect-heading" className={styles.heading}>
+                Reflections
+              </h2>
+              <p className={styles.sub}>A short reflection on your week, written by AI</p>
+              <Reflection scope="week" />
+            </section>
+
+            <GoalsProgress entries={entries} habits={habits} goals={habitConfig.goals} />
+
+            <MoodOutlook entries={entries} />
+
+            <Patterns entries={entries} habits={habits} />
 
             <section className={styles.card} aria-labelledby="trend-heading">
               <div className={styles.cardHead}>

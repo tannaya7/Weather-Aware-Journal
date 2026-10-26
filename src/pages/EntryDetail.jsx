@@ -1,8 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { Button } from '../components/Button/Button.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
+import { useSemantic } from '../context/SemanticContext.jsx';
 import { formatDateLong } from '../lib/dateFormat.js';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { emojiForMood } from '../lib/moods.js';
@@ -10,7 +12,43 @@ import { fontFamilyFor, weatherCardStyle } from '../lib/entryStyle.js';
 import { getEntryImages } from '../lib/entryImages.js';
 import { allHabits } from '../lib/habits.js';
 import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
+import { RichText } from '../components/RichText/RichText.jsx';
+import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { ConflictNotice, EntryHistory } from '../components/EntryVersions/EntryVersions.jsx';
+import { hasConflict } from '../lib/entryHistory.js';
+import { toggleChecklistLine } from '../lib/richText.js';
+import { relatedEntries } from '../lib/search.js';
+import { formatDuration } from '../hooks/useVoiceRecorder.js';
+import { Link } from 'react-router-dom';
 import styles from './EntryDetail.module.css';
+
+const MAX_RELATED = 5;
+
+// Entries alike in meaning (when search by meaning is on) first, then the
+// ones that share tags, words, mood, or weather.
+function RelatedEntries({ entry, entries }) {
+  const semantic = useSemantic();
+  const byId = new Map(entries.map((e) => [String(e.id), e]));
+  const similar = semantic.enabled ? semantic.similarTo(entry.id).map((hit) => byId.get(hit.id)).filter(Boolean) : [];
+  const seen = new Set(similar.map((e) => String(e.id)));
+  const related = [...similar, ...relatedEntries(entry, entries).filter((e) => !seen.has(String(e.id)))].slice(0, MAX_RELATED);
+  if (related.length === 0) return null;
+  return (
+    <section className={styles.related} aria-labelledby="related-heading">
+      <h2 id="related-heading" className={styles.relatedHeading}>
+        Related entries
+      </h2>
+      <ul>
+        {related.map((other) => (
+          <li key={other.id}>
+            <Link to={`/entry/${other.id}`}>{getEntryTitle(other)}</Link>
+            <span>{formatDateLong(other.date)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function HabitChips({ values, habits }) {
   const shown = habits.filter((h) => values?.[h.id] !== undefined && values[h.id] !== false);
@@ -28,9 +66,10 @@ function HabitChips({ values, habits }) {
 }
 
 export function EntryDetail() {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getEntryById, deleteEntry, habitConfig } = useEntriesContext();
+  const { getEntryById, deleteEntry, updateEntry, habitConfig, entries } = useEntriesContext();
   const entry = getEntryById(id);
 
   if (!entry) {
@@ -61,7 +100,7 @@ export function EntryDetail() {
 
   return (
     <>
-      <Header title="Journal Entry">
+      <Header title={t('page.entry')}>
         <ThemeToggle />
         <Button variant="secondary" onClick={() => navigate('/')} aria-label="Back to journal timeline">
           ← Back
@@ -75,6 +114,9 @@ export function EntryDetail() {
       </Header>
 
       <div className={`container ${styles.page}`} id="main-content" role="main">
+        {hasConflict(entry) && (
+          <ConflictNotice entry={entry} onResolve={(fields) => updateEntry(entry.id, fields)} />
+        )}
         <article
           className={styles.article}
           style={{ fontFamily: fontFamilyFor(entry), ...weatherCardStyle(entry) }}
@@ -109,17 +151,42 @@ export function EntryDetail() {
             </div>
           )}
 
-          {images.length === 1 && <img src={images[0]} alt="" className={styles.image} />}
+          {images.length === 1 && <img src={images[0]} alt="" className={styles.image} decoding="async" />}
           {images.length > 1 && (
             <div className={styles.imageGrid}>
               {images.map((src, index) => (
-                <img key={index} src={src} alt="" className={styles.gridImage} />
+                <img key={index} src={src} alt="" className={styles.gridImage} loading="lazy" decoding="async" />
               ))}
             </div>
           )}
 
-          <div className={styles.content}>{entry.content}</div>
+          {entry.audio?.length > 0 && (
+            <ul className={styles.memos} aria-label="Voice memos">
+              {entry.audio.map((memo, i) => (
+                <li key={memo.recordedAt || i}>
+                  {/* eslint-disable-next-line jsx-a11y/media-has-caption -- the person's own voice memo */}
+                  <audio controls src={memo.src} preload="metadata" aria-label={`Voice memo ${i + 1}`} />
+                  <span>{formatDuration(memo.duration || 0)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.content}>
+            <RichText
+              text={entry.content}
+              onToggleCheck={(line) => updateEntry(entry.id, { content: toggleChecklistLine(entry.content, line) })}
+            />
+          </div>
         </article>
+
+        <section className={styles.related} aria-label="Reflect">
+          <Reflection scope="entry" entry={entry} />
+        </section>
+
+        <EntryHistory entry={entry} onRestore={(fields) => updateEntry(entry.id, fields)} />
+
+        <RelatedEntries entry={entry} entries={entries} />
       </div>
     </>
   );

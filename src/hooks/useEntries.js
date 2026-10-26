@@ -23,6 +23,7 @@ import { mergeEntries, mergeImportedEntries } from '../lib/exportImport.js';
 import { readEncryptedBackup } from '../lib/backup.js';
 import { getPasskeySecret, registerPasskey } from '../lib/passkey.js';
 import { DEFAULT_HABIT_CONFIG } from '../lib/habits.js';
+import { recordEdit } from '../lib/entryHistory.js';
 
 // Owns the journal entries array and every change to it, persisted to
 // IndexedDB (lib/storage.js). Loading is async, so `status` moves from
@@ -33,13 +34,31 @@ import { DEFAULT_HABIT_CONFIG } from '../lib/habits.js';
 // then undo) apply in order, each on top of the last saved list. A write
 // saves first and only then updates state, so a failed save (for example
 // StorageFullError) rejects and leaves the list as it actually is on disk.
+// Settings kept with the journal; they're re-saved whenever the lock
+// changes (which clears and re-encrypts the meta store).
+const SETTING_NAMES = ['habits', 'sync', 'tombstones', 'ai', 'semantic'];
+
+async function loadAllSettings(key) {
+  const values = await Promise.all(SETTING_NAMES.map((name) => loadSetting(name, key)));
+  return Object.fromEntries(SETTING_NAMES.map((name, i) => [name, values[i]]).filter(([, v]) => v !== null));
+}
+
+async function saveAllSettings(values, key) {
+  for (const [name, value] of Object.entries(values)) {
+    if (value !== undefined && value !== null) await saveSetting(name, value, key);
+  }
+}
+
 export function useEntries() {
   const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState('loading');
   const [lockEnabled, setLockEnabled] = useState(false);
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
-  const [habitConfig, setHabitConfigState] = useState(DEFAULT_HABIT_CONFIG);
-  const habitConfigRef = useRef(DEFAULT_HABIT_CONFIG);
+  // Small settings saved with the journal (and encrypted with it): which
+  // habits to track, sync details, deletion records for sync, AI opt-in.
+  const [settings, setSettings] = useState({});
+  const settingsRef = useRef({});
+  const habitConfig = settings.habits || DEFAULT_HABIT_CONFIG;
   const [loadError, setLoadError] = useState(null);
 
   const entriesRef = useRef([]);
@@ -49,6 +68,11 @@ export function useEntries() {
   const applyEntries = useCallback((next) => {
     entriesRef.current = next;
     setEntries(next);
+  }, []);
+
+  const applySettings = useCallback((next) => {
+    settingsRef.current = next;
+    setSettings(next);
   }, []);
 
   useEffect(() => {
@@ -63,13 +87,10 @@ export function useEntries() {
           setStatus('locked');
           return;
         }
-        const [loaded, habits] = await Promise.all([loadEntries(), loadSetting('habits')]);
+        const [loaded, stored] = await Promise.all([loadEntries(), loadAllSettings(null)]);
         if (cancelled) return;
         applyEntries(loaded);
-        if (habits) {
-          habitConfigRef.current = habits;
-          setHabitConfigState(habits);
-        }
+        applySettings(stored);
         setStatus('ready');
         requestPersistentStorage();
       } catch (error) {
@@ -82,7 +103,7 @@ export function useEntries() {
     return () => {
       cancelled = true;
     };
-  }, [applyEntries]);
+  }, [applyEntries, applySettings]);
 
   const enqueue = useCallback((task) => {
     const run = queueRef.current.then(task);
@@ -103,9 +124,17 @@ export function useEntries() {
     [enqueue, applyEntries],
   );
 
+  // Deleted ids with when, so a delete on one device isn't undone by an
+  // older copy synced from another (see lib/syncMerge.js).
+  const writeTombstones = useCallback(async (update) => {
+    const next = update({ ...(settingsRef.current.tombstones || {}) });
+    await saveSetting('tombstones', next, keyRef.current);
+    applySettings({ ...settingsRef.current, tombstones: next });
+  }, [applySettings]);
+
   const addEntry = useCallback(
     (data) => {
-      const entry = { id: Date.now() + Math.random(), ...data };
+      const entry = { id: Date.now() + Math.random(), ...data, updatedAt: Date.now() };
       return persist((prev) => ({ next: [...prev, entry], result: entry }));
     },
     [persist],
@@ -113,27 +142,48 @@ export function useEntries() {
 
   const updateEntry = useCallback(
     (id, data) =>
-      persist((prev) => ({
-        next: prev.map((e) => (e.id === id ? { ...e, ...data, id } : e)),
-        result: undefined,
-      })),
+      persist((prev) => {
+        const now = Date.now();
+        return {
+          // The writing before this edit goes into the entry's history.
+          next: prev.map((e) => (e.id === id ? recordEdit(e, { ...e, ...data, id, updatedAt: now }, now) : e)),
+          result: undefined,
+        };
+      }),
     [persist],
   );
 
   const deleteEntry = useCallback(
-    (id) =>
-      persist((prev) => ({
+    async (id) => {
+      const removed = await persist((prev) => ({
         next: prev.filter((e) => e.id !== id),
         result: prev.find((e) => e.id === id) || null,
-      })),
-    [persist],
+      }));
+      if (removed) {
+        await enqueue(() => writeTombstones((t) => ({ ...t, [id]: Date.now() })));
+      }
+      return removed;
+    },
+    [persist, enqueue, writeTombstones],
   );
 
   const restoreEntry = useCallback(
-    (entry) => {
-      if (!entry) return Promise.resolve();
-      return persist((prev) => ({ next: [...prev, entry], result: undefined }));
+    async (entry) => {
+      if (!entry) return;
+      await persist((prev) => ({ next: [...prev, { ...entry, updatedAt: Date.now() }], result: undefined }));
+      await enqueue(() =>
+        writeTombstones((t) => {
+          delete t[entry.id];
+          return t;
+        }),
+      );
     },
+    [persist, enqueue, writeTombstones],
+  );
+
+  // Replaces the whole list (sync merges): diffs against what's stored.
+  const replaceAll = useCallback(
+    (next) => persist(() => ({ next, result: undefined })),
     [persist],
   );
 
@@ -143,6 +193,16 @@ export function useEntries() {
     (jsonText) =>
       persist((prev) => {
         const result = mergeImportedEntries(prev, jsonText);
+        return { next: result.entries, result };
+      }),
+    [persist],
+  );
+
+  // Entries already read from a file (lib/importers.js), merged the same way.
+  const importEntryList = useCallback(
+    (list) =>
+      persist((prev) => {
+        const result = mergeEntries(prev, list);
         return { next: result.entries, result };
       }),
     [persist],
@@ -165,17 +225,14 @@ export function useEntries() {
 
   const openWithKey = useCallback(
     async (key) => {
-      const [loaded, habits] = await Promise.all([loadEntries(key), loadSetting('habits', key)]);
+      const [loaded, stored] = await Promise.all([loadEntries(key), loadAllSettings(key)]);
       keyRef.current = key;
       applyEntries(loaded);
-      if (habits) {
-        habitConfigRef.current = habits;
-        setHabitConfigState(habits);
-      }
+      applySettings(stored);
       setStatus('ready');
       requestPersistentStorage();
     },
-    [applyEntries],
+    [applyEntries, applySettings],
   );
 
   const unlock = useCallback(
@@ -203,7 +260,7 @@ export function useEntries() {
     (passcode) =>
       enqueue(async () => {
         keyRef.current = await setPasscode(passcode, entriesRef.current);
-        await saveSetting('habits', habitConfigRef.current, keyRef.current);
+        await saveAllSettings(settingsRef.current, keyRef.current);
         setLockEnabled(true);
       }),
     [enqueue],
@@ -246,7 +303,7 @@ export function useEntries() {
         await unlockStorage(currentPasscode);
         await removePasscode(entriesRef.current);
         keyRef.current = null;
-        await saveSetting('habits', habitConfigRef.current, null);
+        await saveAllSettings(settingsRef.current, null);
         setLockEnabled(false);
         setPasskeyEnabled(false);
       }),
@@ -259,26 +316,42 @@ export function useEntries() {
         await eraseJournal();
         keyRef.current = null;
         applyEntries([]);
-        habitConfigRef.current = DEFAULT_HABIT_CONFIG;
-        setHabitConfigState(DEFAULT_HABIT_CONFIG);
+        applySettings({});
         setLockEnabled(false);
         setPasskeyEnabled(false);
         setStatus('ready');
       }),
-    [enqueue, applyEntries],
+    [enqueue, applyEntries, applySettings],
   );
 
   // Which habits to track (Settings). Saved with the journal, encrypted when
   // the lock is on, because custom habit names can be personal.
-  const setHabitConfig = useCallback(
-    (config) =>
+  const setSetting = useCallback(
+    (name, value) =>
       enqueue(async () => {
-        await saveSetting('habits', config, keyRef.current);
-        habitConfigRef.current = config;
-        setHabitConfigState(config);
+        await saveSetting(name, value, keyRef.current);
+        applySettings({ ...settingsRef.current, [name]: value });
       }),
-    [enqueue],
+    [enqueue, applySettings],
   );
+  // Changes a setting based on its value *at the moment the change runs*,
+  // after everything queued before it. `update(current)` returns the new
+  // value, or the same one (or undefined) to leave it alone. Use this when
+  // the decision depends on the current value: checking first and writing
+  // later can be undone by a change that was queued in between.
+  const updateSetting = useCallback(
+    (name, update) =>
+      enqueue(async () => {
+        const current = settingsRef.current[name];
+        const next = update(current);
+        if (next === undefined || next === current) return current;
+        await saveSetting(name, next, keyRef.current);
+        applySettings({ ...settingsRef.current, [name]: next });
+        return next;
+      }),
+    [enqueue, applySettings],
+  );
+  const setHabitConfig = useCallback((config) => setSetting('habits', config), [setSetting]);
 
   // --- Drafts (encrypted alongside entries when the lock is on) ---
 
@@ -304,9 +377,16 @@ export function useEntries() {
     restoreEntry,
     getEntryById,
     importEntries,
+    importEntryList,
     importBackup,
     habitConfig,
     setHabitConfig,
+    settings,
+    setSetting,
+    updateSetting,
+    replaceAll,
+    getEntriesNow: () => entriesRef.current,
+    getSettingsNow: () => settingsRef.current,
     lockEnabled,
     passkeyEnabled,
     unlock,

@@ -249,3 +249,10 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+.fieldError {
+  margin: 4px 0 0;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 600;
+}

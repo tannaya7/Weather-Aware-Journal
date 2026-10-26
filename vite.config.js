@@ -2,7 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+import { readFileSync } from 'node:fs';
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+
 export default defineConfig({
+  // Shown in error reports, so a report says which build it came from.
+  define: { __APP_VERSION__: JSON.stringify(version) },
   base: '/Weather-Aware-Journal/',
   plugins: [
     react(),
@@ -37,8 +43,22 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Shows daily reminder notifications (see public/sw-push.js).
+        importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,css,html,svg}'],
+        // The search-by-meaning engine is large and only needed by people
+        // who turn that on, so it is cached when first used, not at install.
+        globIgnores: ['**/transformers.web-*.js'],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => /\/assets\/(transformers\.web|ort-wasm)[^/]*\.(js|wasm)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'semantic-engine',
+              expiration: { maxEntries: 6 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/(geocoding-api\.open-meteo\.com|api\.open-meteo\.com)\/.*/,
             handler: 'NetworkFirst',
@@ -56,7 +76,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './tests/setup.js',
+    // Some tests exercise real timers and storage, and slow down when the
+    // whole suite runs at once.
+    testTimeout: 20000,
     // Browser tests (Playwright) live in e2e/ and run separately.
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: ['e2e/**', '**/node_modules/**', 'dist/**'],
   },
 });

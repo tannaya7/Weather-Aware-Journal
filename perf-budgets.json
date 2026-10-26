@@ -1,0 +1,10 @@
+{
+  "initialJsKb": 115,
+  "initialCssKb": 12,
+  "defaultChunkKb": 25,
+  "chunkKb": {
+    "MapPage": 55,
+    "transformers.web": 190
+  },
+  "precacheKb": 230
+}

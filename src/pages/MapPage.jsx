@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Header } from '../components/Header/Header.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { geocodeCity } from '../lib/weatherApi.js';
@@ -79,6 +80,7 @@ function pinIcon(place) {
 }
 
 export function MapPage() {
+  const { t } = useI18n();
   const { entries } = useEntriesContext();
   const mapEl = useRef(null);
   const mapRef = useRef(null);
@@ -161,7 +163,7 @@ export function MapPage() {
 
   return (
     <>
-      <Header title="Map" icon="🗺️">
+      <Header title={t('page.map')} icon="🗺️">
         <ThemeToggle />
       </Header>
 
