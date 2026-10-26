@@ -73,7 +73,7 @@ test('encrypted backup downloads and restores', async ({ page }) => {
 
   await expect(page.getByRole('status').filter({ hasText: 'Restored 2 entries.' })).toBeVisible();
   await goTo(page, 'Home');
-  await expect(page.getByText('Backed up two')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Read entry: Backed up two' })).toBeVisible();
   expect(page.consoleErrors).toEqual([]);
 });
 
