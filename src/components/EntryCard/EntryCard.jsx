@@ -9,6 +9,12 @@ import { Highlight } from '../Highlight/Highlight.jsx';
 import { hasConflict } from '../../lib/entryHistory.js';
 import styles from './EntryCard.module.css';
 
+// The preview shows two lines, so blank lines (often right under the title)
+// would use them up and hide the writing.
+function previewText(content) {
+  return stripMarkdown(content).replace(/\n[ \t]*(?:\n[ \t]*)+/g, '\n');
+}
+
 export function EntryCard({ entry, onEdit, onDelete, highlight }) {
   const { day, weekday } = getDateBadgeParts(entry.date);
   const title = getEntryTitle(entry);
@@ -43,7 +49,7 @@ export function EntryCard({ entry, onEdit, onDelete, highlight }) {
           )}
         </div>
         <p className={styles.preview}>
-          <Highlight text={stripMarkdown(entry.content)} terms={highlight} />
+          <Highlight text={previewText(entry.content)} terms={highlight} />
         </p>
         {hasConflict(entry) && (
           <p className={styles.extras}>
