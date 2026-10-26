@@ -52,7 +52,7 @@ test.describe('visual @visual', () => {
     await seedEntries(page, ENTRIES);
   });
 
-  const shot = { fullPage: true, animations: 'disabled', maxDiffPixelRatio: 0.01 };
+  const shot = { fullPage: true, animations: 'disabled', maxDiffPixelRatio: 0.002 };
 
   test('dashboard, light', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
