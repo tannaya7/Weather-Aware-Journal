@@ -33,6 +33,9 @@ describe('Formatting and templates', () => {
     textarea.setSelectionRange(4, 7);
     await user.click(screen.getByRole('button', { name: 'Bold' }));
     expect(textarea).toHaveValue('Big **day**');
+    // The toolbar re-selects the bolded word on the next frame; wait for it,
+    // or that selection can land after the typing below starts and eat it.
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
 
     await user.type(textarea, '{End}{Enter}buy milk');
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
