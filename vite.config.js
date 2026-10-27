@@ -6,12 +6,49 @@ import { readFileSync } from 'node:fs';
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
+// GitHub Pages can't send security headers, so the policy goes in a <meta>
+// tag. Built pages only: the dev server injects inline scripts of its own.
+// connect-src allows any https origin because the sync server's address can
+// be changed in Settings. jsdelivr serves the search-by-meaning engine's
+// loader; 'wasm-unsafe-eval' lets that engine run.
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
+  "media-src 'self' data: blob:",
+  "connect-src 'self' https:",
+  "worker-src 'self' blob:",
+  "font-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
+function securityMeta() {
+  return {
+    name: 'security-meta',
+    apply: 'build',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta',
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+          injectTo: 'head-prepend',
+        },
+      ];
+    },
+  };
+}
+
 export default defineConfig({
   // Shown in error reports, so a report says which build it came from.
   define: { __APP_VERSION__: JSON.stringify(version) },
   base: '/Weather-Aware-Journal/',
   plugins: [
     react(),
+    securityMeta(),
     VitePWA({
       // 'prompt': a new version waits until the user clicks Refresh in
       // UpdatePrompt, which also registers the service worker itself.
