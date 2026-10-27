@@ -14,8 +14,8 @@ jobs:
     name: Lint, unit tests, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -35,15 +35,15 @@ jobs:
     name: Browser tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -54,8 +54,8 @@ jobs:
     name: Lighthouse (mobile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -63,7 +63,7 @@ jobs:
       - run: npm run build
       # Scores on a slow phone over a slow network; limits in lighthouserc.json.
       - run: npx --yes @lhci/cli@0.15.1 autorun
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lighthouse-report
@@ -74,7 +74,7 @@ jobs:
     name: Visual comparison
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Pictures are compared against baselines made on the same platform.
       # Until Linux baselines are committed (run the "Update visual baselines"
       # workflow), there is nothing to compare against, so the rest is
@@ -87,7 +87,7 @@ jobs:
             echo "No Linux baselines committed yet; skipping visual comparison."
           fi
       - if: steps.baselines.outputs.found == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -97,7 +97,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - if: steps.baselines.outputs.found == 'true'
         run: npm run test:visual
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure() && steps.baselines.outputs.found == 'true'
         with:
           name: visual-diffs
