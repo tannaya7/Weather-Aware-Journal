@@ -11,6 +11,6 @@
     "dev:staging": "npx wrangler dev --env staging"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0"
+    "@anthropic-ai/sdk": "^1.3.0"
   }
 }
