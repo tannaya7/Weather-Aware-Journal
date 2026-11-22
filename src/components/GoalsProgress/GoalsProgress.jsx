@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { allGoalProgress, describeGoal } from '../../lib/goals.js';
+import { habitName } from '../HabitFields/HabitFields.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './GoalsProgress.module.css';
 
-function weekLabel(dayNumberValue) {
-  return new Date(dayNumberValue * 86400000).toLocaleDateString(undefined, {
+function weekLabel(dayNumberValue, language) {
+  return new Date(dayNumberValue * 86400000).toLocaleDateString(language, {
     month: 'short',
     day: 'numeric',
     timeZone: 'UTC',
@@ -12,60 +14,57 @@ function weekLabel(dayNumberValue) {
 }
 
 function Status({ progress }) {
-  if (progress.achieved) return <span className={styles.good}>Goal reached this week</span>;
+  const { t } = useI18n();
+  if (progress.achieved) return <span className={styles.good}>{t('goals.reached')}</span>;
   if (progress.onTrack) {
-    return (
-      <span>
-        {progress.target - progress.metThisWeek} more to go, {progress.daysLeft}{' '}
-        {progress.daysLeft === 1 ? 'day' : 'days'} left
-      </span>
-    );
+    return <span>{t('goals.toGo', { more: progress.target - progress.metThisWeek, count: progress.daysLeft })}</span>;
   }
-  return <span className={styles.behind}>Out of reach this week. A fresh start on Monday.</span>;
+  return <span className={styles.behind}>{t('goals.outOfReach')}</span>;
 }
 
 function GoalRow({ habit, goal, progress }) {
+  const { t, tOr, language } = useI18n();
+  const name = habitName(habit, tOr);
+  const unit = tOr(`unit.${habit.unit}`, habit.unit);
   const pct = Math.min(100, Math.round((progress.metThisWeek / progress.target) * 100));
   return (
     <li className={styles.row}>
       <div className={styles.top}>
         <p className={styles.name}>
-          <span aria-hidden="true">{habit.emoji}</span> {describeGoal(goal, habit)}
+          <span aria-hidden="true">{habit.emoji}</span> {describeGoal(goal, habit, t, { name, unit })}
         </p>
         {progress.streakWeeks > 0 && (
-          <p className={styles.streak}>
-            {progress.streakWeeks} {progress.streakWeeks === 1 ? 'week' : 'weeks'} in a row
-          </p>
+          <p className={styles.streak}>{t('goals.streak', { count: progress.streakWeeks })}</p>
         )}
       </div>
       <div
         className={styles.track}
         role="progressbar"
-        aria-label={`${habit.name} this week`}
+        aria-label={t('goals.thisWeek', { habit: name })}
         aria-valuemin={0}
         aria-valuemax={progress.target}
         aria-valuenow={Math.min(progress.metThisWeek, progress.target)}
-        aria-valuetext={`${progress.metThisWeek} of ${progress.target} days`}
+        aria-valuetext={t('goals.daysOf', { met: progress.metThisWeek, target: progress.target })}
       >
         <div className={styles.fill} style={{ width: `${pct}%` }} />
       </div>
       <p className={styles.status}>
-        {progress.metThisWeek} of {progress.target} days · <Status progress={progress} />
+        {t('goals.daysOf', { met: progress.metThisWeek, target: progress.target })} · <Status progress={progress} />
       </p>
-      <ul className={styles.weeks} aria-label={`${habit.name}, earlier weeks`}>
+      <ul className={styles.weeks} aria-label={t('goals.earlier', { habit: name })}>
         {progress.history.map((w) => (
           <li
             key={w.weekStart}
             className={styles.week}
             data-achieved={w.achieved}
-            title={`Week of ${weekLabel(w.weekStart)}: ${w.met} of ${progress.target}`}
+            title={t('goals.weekOf', { date: weekLabel(w.weekStart, language), met: w.met, target: progress.target })}
           >
             <span className={styles.mark} aria-hidden="true">
               {w.achieved ? '✓' : '·'}
             </span>
             <span className={styles.weekText}>
-              Week of {weekLabel(w.weekStart)}: {w.met} of {progress.target}
-              {w.achieved ? ', reached' : ''}
+              {t('goals.weekOf', { date: weekLabel(w.weekStart, language), met: w.met, target: progress.target })}
+              {w.achieved ? t('goals.weekReached') : ''}
             </span>
           </li>
         ))}
@@ -76,16 +75,17 @@ function GoalRow({ habit, goal, progress }) {
 
 // This week's progress toward each habit goal, with the last eight weeks.
 export function GoalsProgress({ entries, habits, goals }) {
+  const { t } = useI18n();
   const items = useMemo(() => allGoalProgress(entries, habits, goals), [entries, habits, goals]);
 
   return (
     <section className={styles.card} aria-labelledby="goals-heading">
       <h2 id="goals-heading" className={styles.heading}>
-        Weekly goals
+        {t('goals.heading')}
       </h2>
       {items.length === 0 ? (
         <p className={styles.empty}>
-          Set a goal for a habit in <Link to="/settings">Settings</Link> and track your week here.
+          {t('goals.emptyBefore')} <Link to="/settings">{t('goals.emptyLink')}</Link> {t('goals.emptyAfter')}
         </p>
       ) : (
         <ul className={styles.list}>

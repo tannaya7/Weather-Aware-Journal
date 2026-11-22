@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { getMonthGridCells } from '../../lib/calendarStats.js';
-import { monthNameLong, WEEKDAY_INITIALS } from '../../lib/dateFormat.js';
+import { monthNameLong, weekdayInitials } from '../../lib/dateFormat.js';
 import { emojiForMood } from '../../lib/moods.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './MiniMonth.module.css';
 
 const TODAY_KEY = (() => {
@@ -12,13 +13,15 @@ const TODAY_KEY = (() => {
 // One small month grid in the year view — plain day numbers, with a mood
 // emoji standing in for the number on any day that has a journal entry.
 export function MiniMonth({ year, month, dayMoodMap }) {
+  const { t, tOr, language } = useI18n();
   const cells = getMonthGridCells(year, month);
+  const monthName = monthNameLong(month, language);
 
   return (
     <div className={styles.month}>
-      <h3 className={styles.heading}>{monthNameLong(month)}</h3>
+      <h3 className={styles.heading}>{monthName}</h3>
       <div className={styles.grid}>
-        {WEEKDAY_INITIALS.map((w, i) => (
+        {weekdayInitials(language).map((w, i) => (
           <span key={i} className={styles.weekday} aria-hidden="true">
             {w}
           </span>
@@ -46,8 +49,8 @@ export function MiniMonth({ year, month, dayMoodMap }) {
               key={cell.key}
               to={`/entry/${entry.entryId}`}
               className={`${styles.day} ${styles.hasEntry} ${isToday ? styles.today : ''}`}
-              aria-label={`${monthNameLong(month)} ${cell.day}: entry logged, mood ${entry.mood}`}
-              title={`${monthNameLong(month)} ${cell.day} — ${entry.mood}`}
+              aria-label={t('miniMonth.dayLabel', { month: monthName, day: cell.day, mood: tOr(`mood.${entry.mood}`, entry.mood) })}
+              title={`${monthName} ${cell.day} — ${tOr(`mood.${entry.mood}`, entry.mood)}`}
             >
               <span className={styles.emoji} aria-hidden="true">
                 {emojiForMood(entry.mood)}

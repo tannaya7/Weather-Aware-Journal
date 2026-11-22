@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button } from '../Button/Button.jsx';
 import { useEntriesContext } from '../../context/EntriesContext.jsx';
 import { allHabits, makeCustomHabit } from '../../lib/habits.js';
+import { habitName } from '../HabitFields/HabitFields.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './HabitSettings.module.css';
 
 const MAX_NAME = 30;
@@ -10,6 +12,7 @@ const MAX_NAME = 30;
 // Turning a habit off hides it; values already saved on entries are kept.
 export function HabitSettings() {
   const { habitConfig, setHabitConfig } = useEntriesContext();
+  const { t, tOr } = useI18n();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
   const [error, setError] = useState('');
@@ -24,9 +27,9 @@ export function HabitSettings() {
   function handleAdd(e) {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) return setError('Give the habit a name.');
+    if (!trimmed) return setError(t('habits.needName'));
     if (allHabits(habitConfig).some((h) => h.name.toLowerCase() === trimmed.toLowerCase())) {
-      return setError('You already have a habit with that name.');
+      return setError(t('habits.duplicate'));
     }
     const habit = makeCustomHabit(trimmed.slice(0, MAX_NAME), emoji.trim() || '✅');
     setHabitConfig({
@@ -51,25 +54,25 @@ export function HabitSettings() {
 
   return (
     <div className={styles.habits}>
-      <p className={styles.text}>
-        Log these with each entry, and Insights shows which ones line up with your better days.
-      </p>
+      <p className={styles.text}>{t('habits.intro')}</p>
       <ul className={styles.list}>
         {allHabits(habitConfig).map((habit) => (
           <li key={habit.id} className={styles.item}>
             <label className={styles.check}>
               <input type="checkbox" checked={enabled.has(habit.id)} onChange={() => toggle(habit.id)} />
-              <span aria-hidden="true">{habit.emoji}</span> {habit.name}
-              <span className={styles.kind}>{habit.type === 'boolean' ? 'yes / no' : habit.unit}</span>
+              <span aria-hidden="true">{habit.emoji}</span> {habitName(habit, tOr)}
+              <span className={styles.kind}>
+                {habit.type === 'boolean' ? t('habits.yesNo') : tOr(`unit.${habit.unit}`, habit.unit)}
+              </span>
             </label>
             {habit.id.startsWith('custom-') && (
               <button
                 type="button"
                 className={styles.remove}
                 onClick={() => remove(habit.id)}
-                aria-label={`Remove habit ${habit.name}`}
+                aria-label={t('habits.removeLabel', { name: habit.name })}
               >
-                Remove
+                {t('habits.remove')}
               </button>
             )}
           </li>
@@ -78,17 +81,17 @@ export function HabitSettings() {
 
       <form className={styles.add} onSubmit={handleAdd} noValidate>
         <label className={styles.field}>
-          New yes/no habit
+          {t('habits.newLabel')}
           <input
             className={styles.input}
             value={name}
             maxLength={MAX_NAME}
-            placeholder="e.g. Meditated"
+            placeholder={t('habits.newPlaceholder')}
             onChange={(e) => setName(e.target.value)}
           />
         </label>
         <label className={styles.field}>
-          Emoji <span>(optional)</span>
+          {t('habits.emoji')} <span>{t('form.optional')}</span>
           <input
             className={`${styles.input} ${styles.emoji}`}
             value={emoji}
@@ -98,7 +101,7 @@ export function HabitSettings() {
           />
         </label>
         <Button type="submit" variant="secondary">
-          Add habit
+          {t('habits.add')}
         </Button>
       </form>
       {error && (

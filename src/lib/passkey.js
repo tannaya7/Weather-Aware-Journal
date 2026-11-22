@@ -84,3 +84,11 @@ export function passkeyErrorMessage(error) {
   if (error?.name === 'PasskeyUnsupportedError') return error.message;
   return error?.message || 'Something went wrong with the passkey.';
 }
+
+// The same, as a translation key for the app's language.
+export function passkeyErrorKey(error) {
+  if (error?.name === 'NotAllowedError') return 'passkeyError.cancelled';
+  if (error?.name === 'PasskeyUnsupportedError') return 'passkeyError.unsupported';
+  if (error?.message === 'Setting up the passkey was cancelled.') return 'passkeyError.setupCancelled';
+  return 'passkeyError.other';
+}

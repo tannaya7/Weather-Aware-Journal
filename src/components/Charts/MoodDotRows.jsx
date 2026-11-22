@@ -1,13 +1,14 @@
 import { describeMood } from '../../lib/insights.js';
 import { useChartWidth } from './useChartWidth.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './Charts.module.css';
 
 const ROW_H = 40;
 const M = { top: 8, right: 16, bottom: 28, left: 150 };
 const TICKS = [
-  { value: -2, label: 'Low' },
-  { value: 0, label: 'Mixed' },
-  { value: 2, label: 'Great' },
+  { value: -2, label: 'dots.low' },
+  { value: 0, label: 'dots.mixed' },
+  { value: 2, label: 'dots.great' },
 ];
 
 function signed(n) {
@@ -19,6 +20,7 @@ function signed(n) {
 // with vs. without); the second is drawn hollow, and a legend says which
 // is which. Every value is in the table view under the chart.
 export function MoodDotRows({ rows, legend }) {
+  const { t, tOr } = useI18n();
   const [ref, width] = useChartWidth();
   const plotW = Math.max(width - M.left - M.right, 10);
   const height = M.top + rows.length * ROW_H + M.bottom;
@@ -40,17 +42,17 @@ export function MoodDotRows({ rows, legend }) {
         </ul>
       )}
       <svg width={width} height={height} className={styles.svg} aria-hidden="true">
-        {TICKS.map((t) => (
-          <g key={t.value}>
+        {TICKS.map((tick) => (
+          <g key={tick.value}>
             <line
-              x1={x(t.value)}
-              x2={x(t.value)}
+              x1={x(tick.value)}
+              x2={x(tick.value)}
               y1={M.top}
               y2={height - M.bottom}
-              className={t.value === 0 ? styles.baseline : styles.grid}
+              className={tick.value === 0 ? styles.baseline : styles.grid}
             />
-            <text x={x(t.value)} y={height - 8} className={styles.axisLabel} textAnchor="middle">
-              {t.label}
+            <text x={x(tick.value)} y={height - 8} className={styles.axisLabel} textAnchor="middle">
+              {t(tick.label)}
             </text>
           </g>
         ))}
@@ -76,14 +78,14 @@ export function MoodDotRows({ rows, legend }) {
       </ul>
 
       <details className={styles.tableToggle}>
-        <summary>View as table</summary>
+        <summary>{t('dots.table')}</summary>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th scope="col">{legend ? 'Habit' : 'When'}</th>
-              {legend && <th scope="col">Days</th>}
-              <th scope="col">Mood</th>
-              <th scope="col">Entries</th>
+              <th scope="col">{t(legend ? 'dots.habit' : 'dots.when')}</th>
+              {legend && <th scope="col">{t('dots.days')}</th>}
+              <th scope="col">{t('dots.mood')}</th>
+              <th scope="col">{t('dots.entries')}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,7 +95,7 @@ export function MoodDotRows({ rows, legend }) {
                   <td>{row.label}</td>
                   {legend && <td>{p.name}</td>}
                   <td>
-                    {describeMood(p.average)} ({signed(p.average)})
+                    {tOr(`moodScore.${describeMood(p.average)}`, describeMood(p.average))} ({signed(p.average)})
                   </td>
                   <td>{p.days}</td>
                 </tr>

@@ -224,8 +224,15 @@ export async function deleteSyncedJournal(code, fetchImpl = fetch) {
 
 // --- AI reflections and reminders (same identity) ---------------------------
 
-export async function requestReflection(code, { scope, entries }, fetchImpl = fetch) {
-  return call(await deriveSyncIdentity(code), 'POST', '/reflect', { scope, entries }, fetchImpl);
+export async function requestReflection(code, { scope, entries, language }, fetchImpl = fetch) {
+  return call(await deriveSyncIdentity(code), 'POST', '/reflect', { scope, entries, language }, fetchImpl);
+}
+
+// The Gemini helpers: `task` is 'reflection', 'organization', or 'pattern'
+// (see lib/aiTasks.js). One request per press of a button; never retried
+// automatically.
+export async function requestAiTask(code, task, body, fetchImpl = fetch) {
+  return call(await deriveSyncIdentity(code), 'POST', `/ai/${task}`, body, fetchImpl);
 }
 
 export async function getPushPublicKey(fetchImpl = fetch) {

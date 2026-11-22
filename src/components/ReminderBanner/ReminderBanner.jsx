@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../Button/Button.jsx';
 import { isSameDay } from '../../lib/dateFormat.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './ReminderBanner.module.css';
 
 const DISMISSED_KEY = 'weatherJournalReminderDismissed';
@@ -33,6 +34,7 @@ function writeDismissed(value) {
 // the evening on days with no entry yet, and dismissible for the day.
 export function ReminderBanner({ entries, now = new Date() }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const today = dayKey(now);
   const [dismissed, setDismissed] = useState(() => readDismissed() === today);
 
@@ -45,20 +47,20 @@ export function ReminderBanner({ entries, now = new Date() }) {
   }
 
   return (
-    <aside className={styles.banner} aria-label="Writing reminder">
+    <aside className={styles.banner} aria-label={t('reminder.label')}>
       <span className={styles.icon} aria-hidden="true">
         🌙
       </span>
-      <p className={styles.text}>You haven&apos;t written today. How was it?</p>
+      <p className={styles.text}>{t('reminder.text')}</p>
       <Button type="button" small onClick={() => navigate('/new')}>
-        Write now
+        {t('reminder.write')}
       </Button>
       <button
         type="button"
         className={styles.dismiss}
         onClick={handleDismiss}
-        aria-label="Dismiss reminder for today"
-        title="Dismiss for today"
+        aria-label={t('reminder.dismiss')}
+        title={t('reminder.dismissShort')}
       >
         <span aria-hidden="true">×</span>
       </button>

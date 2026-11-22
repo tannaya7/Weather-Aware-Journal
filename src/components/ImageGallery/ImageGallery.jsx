@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getEntryTitle } from '../../lib/entryTitle.js';
 import { formatDateForCard } from '../../lib/dateFormat.js';
 import { getEntryImages } from '../../lib/entryImages.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './ImageGallery.module.css';
 
 // A separate "photo memories" strip for entries that have an attached
@@ -12,6 +13,7 @@ import styles from './ImageGallery.module.css';
 export const GALLERY_PAGE = 12;
 
 export function ImageGallery({ entries }) {
+  const { t, language } = useI18n();
   const [shown, setShown] = useState(GALLERY_PAGE);
   const withImages = useMemo(
     () =>
@@ -27,7 +29,7 @@ export function ImageGallery({ entries }) {
   return (
     <section className={styles.section} aria-labelledby="snapshots-heading">
       <h2 id="snapshots-heading" className={styles.heading}>
-        Snapshots
+        {t('gallery.heading')}
       </h2>
       <div className={styles.grid}>
         {withImages.slice(0, shown).map(({ entry, images }) => {
@@ -38,7 +40,7 @@ export function ImageGallery({ entries }) {
               key={entry.id}
               to={`/entry/${entry.id}`}
               className={styles.card}
-              aria-label={`Read entry: ${title}${extra > 0 ? ` (${images.length} photos)` : ''}`}
+              aria-label={extra > 0 ? t('gallery.readWithPhotos', { title, count: images.length }) : t('card.read', { title })}
             >
               <img src={images[0]} alt="" className={styles.image} loading="lazy" decoding="async" />
               {extra > 0 && (
@@ -48,7 +50,7 @@ export function ImageGallery({ entries }) {
               )}
               <div className={styles.caption}>
                 <p className={styles.excerpt}>{title}</p>
-                <span className={styles.date}>{formatDateForCard(entry.date)}</span>
+                <span className={styles.date}>{formatDateForCard(entry.date, language)}</span>
               </div>
             </Link>
           );
@@ -56,7 +58,7 @@ export function ImageGallery({ entries }) {
       </div>
       {withImages.length > shown && (
         <button type="button" className={styles.showMore} onClick={() => setShown((n) => n + GALLERY_PAGE * 2)}>
-          Show more photos ({withImages.length - shown} more)
+          {t('gallery.more', { count: withImages.length - shown })}
         </button>
       )}
     </section>

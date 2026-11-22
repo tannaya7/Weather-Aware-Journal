@@ -36,6 +36,10 @@ function cleanEntries(raw) {
   }));
 }
 
+// The app's other languages; the reflection is written in the one in use.
+// Anything else (or nothing) means English.
+const LANGUAGE_NAMES = { es: 'Spanish', hi: 'Hindi' };
+
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -70,6 +74,8 @@ export async function reflect(request, env, vaultId, deps = {}) {
   await env.JOURNAL.put(usageKey, String(used + 1), { expirationTtl: 2 * 86400 });
 
   const scope = body.scope === 'entry' ? 'this one entry' : 'these entries from the past week';
+  const languageName = LANGUAGE_NAMES[body.language];
+  const inLanguage = languageName ? ` Write the reflection in ${languageName}.` : '';
   const anthropic = client || new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   let response;
@@ -86,7 +92,7 @@ export async function reflect(request, env, vaultId, deps = {}) {
       messages: [
         {
           role: 'user',
-          content: `Please reflect on ${scope}.\n\n${entries.map(describe).join('\n\n---\n\n')}`,
+          content: `Please reflect on ${scope}.${inLanguage}\n\n${entries.map(describe).join('\n\n---\n\n')}`,
         },
       ],
     });

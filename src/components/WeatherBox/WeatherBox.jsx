@@ -2,6 +2,7 @@ import { Button } from '../Button/Button.jsx';
 import { isPastDate } from '../../lib/weatherApi.js';
 import { formatDateLong } from '../../lib/dateFormat.js';
 import { SkyDetails } from '../SkyDetails/SkyDetails.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './WeatherBox.module.css';
 
 export function WeatherBox({
@@ -14,6 +15,7 @@ export function WeatherBox({
   onUseLocation,
   date,
 }) {
+  const { t, tOr, language } = useI18n();
   const past = isPastDate(date);
   const canLocate = typeof navigator !== 'undefined' && 'geolocation' in navigator;
 
@@ -27,14 +29,14 @@ export function WeatherBox({
   return (
     <div className={styles.field}>
       <label className={styles.quietLabel} htmlFor="locationInput">
-        Weather <span className={styles.optional}>(optional)</span>
+        {t('weatherBox.label')} <span className={styles.optional}>{t('form.optional')}</span>
       </label>
       <div className={styles.row}>
         <input
           id="locationInput"
           className={`${styles.inputBox} ${styles.input}`}
           type="text"
-          placeholder="Add a city to remember the weather"
+          placeholder={t('weatherBox.placeholder')}
           autoComplete="off"
           aria-describedby="locationHelp"
           value={location}
@@ -42,52 +44,48 @@ export function WeatherBox({
           onKeyDown={handleKeyDown}
         />
         <span id="locationHelp" className="sr-only">
-          {past
-            ? `Enter a city name to look up the weather on ${formatDateLong(date)}`
-            : 'Enter a city name to fetch current weather data'}
+          {past ? t('weatherBox.helpPast', { date: formatDateLong(date, language) }) : t('weatherBox.helpNow')}
         </span>
         <Button
           type="button"
           small
           variant="secondary"
-          aria-label="Fetch weather data for entered location"
+          aria-label={t('weatherBox.fetchLabel')}
           onClick={onFetch}
           disabled={status === 'loading'}
         >
-          {status === 'loading' ? 'Fetching…' : 'Add weather'}
+          {status === 'loading' ? t('weatherBox.fetching') : t('weatherBox.add')}
         </Button>
         {canLocate && onUseLocation && (
           <Button
             type="button"
             small
             variant="secondary"
-            aria-label="Use my current location for the weather"
+            aria-label={t('weatherBox.locateLabel')}
             onClick={onUseLocation}
             disabled={status === 'loading'}
           >
-            <span aria-hidden="true">📍</span> Use my location
+            <span aria-hidden="true">📍</span> {t('weatherBox.locate')}
           </Button>
         )}
       </div>
       {past && (
-        <p className={styles.helper}>
-          Looks up the actual weather on {formatDateLong(date)}, at that time of day.
-        </p>
+        <p className={styles.helper}>{t('weatherBox.pastHelper', { date: formatDateLong(date, language) })}</p>
       )}
 
       {weather && (
         <p className={styles.summary}>
           <span aria-hidden="true">{weather.icon}</span>
-          <strong aria-label={`Temperature ${weather.temperature}`}>{weather.temperature}</strong>
-          <span>{weather.weatherType}</span>
+          <strong aria-label={t('weatherBox.temperature', { value: weather.temperature })}>{weather.temperature}</strong>
+          <span>{tOr(`weather.${weather.weatherType}`, weather.weatherType)}</span>
           {weather.locationName && <span>{weather.locationName}</span>}
           {typeof weather.humidity === 'number' && (
-            <span aria-label={`Humidity ${weather.humidity} percent`}>
+            <span aria-label={t('weatherBox.humidity', { value: weather.humidity })}>
               <span aria-hidden="true">💧</span> {weather.humidity}%
             </span>
           )}
           {typeof weather.windSpeed === 'number' && (
-            <span aria-label={`Wind speed ${weather.windSpeed} meters per second`}>
+            <span aria-label={t('weatherBox.wind', { value: weather.windSpeed })}>
               <span aria-hidden="true">💨</span> {weather.windSpeed} m/s
             </span>
           )}

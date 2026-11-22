@@ -1,25 +1,46 @@
 import { useMemo } from 'react';
 import { analyzeCorrelations, dataCoverage, MIN_PAIRS } from '../../lib/correlations.js';
+import { habitName } from '../HabitFields/HabitFields.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './Patterns.module.css';
 
 function signed(n) {
   return `${n > 0 ? '+' : ''}${n.toFixed(2)}`;
 }
 
+// A factor's name in the app's language: built-in ones are translated,
+// habits go through habitName (people's own names stay as written).
+function factorName(factor, tOr) {
+  if (factor.id.startsWith('habit-')) return habitName({ ...factor, id: factor.id.slice('habit-'.length) }, tOr);
+  return tOr(`factor.${factor.id}`, factor.name);
+}
+
+function summaryOf(result, t, tOr) {
+  const { factor, lag, rho } = result;
+  const key = `patterns.${factor.kind === 'flag' ? 'flag' : 'number'}.${lag === 1 ? 1 : 0}.${rho > 0 ? 'higher' : 'lower'}`;
+  return t(key, { name: factorName(factor, tOr).toLowerCase() });
+}
+
 function Finding({ result }) {
-  const { factor, lag, rho, ci, n, strength, confidence, summary } = result;
+  const { t, tOr } = useI18n();
+  const { factor, lag, rho, ci, n, strength, confidence } = result;
   return (
     <li className={styles.finding}>
       <p className={styles.summary}>
         {factor.emoji ? `${factor.emoji} ` : ''}
-        {summary}
+        {summaryOf(result, t, tOr)}
       </p>
       <p className={styles.meta}>
         <span className={styles.badge} data-confidence={confidence}>
-          {confidence === 'clear' ? 'Clear pattern' : 'Possible pattern'}
+          {t(confidence === 'clear' ? 'patterns.clear' : 'patterns.possible')}
         </span>{' '}
-        {strength} {rho > 0 ? 'positive' : 'negative'} link · ρ {signed(rho)} (95% range {signed(ci[0])} to{' '}
-        {signed(ci[1])}) · {n} days{lag === 1 ? ' · compares each day with the one before' : ''}
+        {t('patterns.link', {
+          strength: t(`patterns.strength.${strength}`),
+          sign: t(rho > 0 ? 'patterns.positive' : 'patterns.negative'),
+        })}{' '}
+        · ρ {signed(rho)} ({t('patterns.range', { low: signed(ci[0]), high: signed(ci[1]) })}) ·{' '}
+        {t('patterns.days', { count: n })}
+        {lag === 1 ? ` · ${t('patterns.dayBefore')}` : ''}
       </p>
     </li>
   );
@@ -29,6 +50,7 @@ function Finding({ result }) {
 // own entries. Honest about uncertainty: needs enough days, corrects for
 // testing many things at once, and says what it did not find.
 export function Patterns({ entries, habits }) {
+  const { t, tOr } = useI18n();
   const results = useMemo(() => analyzeCorrelations(entries, { habits }), [entries, habits]);
   const coverage = useMemo(() => dataCoverage(entries), [entries]);
 
@@ -38,18 +60,12 @@ export function Patterns({ entries, habits }) {
   return (
     <section className={styles.card} aria-labelledby="patterns-heading">
       <h2 id="patterns-heading" className={styles.heading}>
-        What moves your mood
+        {t('patterns.heading')}
       </h2>
-      <p className={styles.sub}>
-        Weather, sky, and habit patterns found in your own entries. These show what tends to go
-        together, not what causes what.
-      </p>
+      <p className={styles.sub}>{t('patterns.sub')}</p>
 
       {!coverage.enough ? (
-        <p className={styles.empty}>
-          Log a mood on at least {MIN_PAIRS} different days to look for patterns. You have{' '}
-          {coverage.moodDays}.
-        </p>
+        <p className={styles.empty}>{t('patterns.notEnough', { needed: MIN_PAIRS, have: coverage.moodDays })}</p>
       ) : found.length > 0 ? (
         <ul className={styles.list}>
           {found.map((r) => (
@@ -57,21 +73,18 @@ export function Patterns({ entries, habits }) {
           ))}
         </ul>
       ) : (
-        <p className={styles.empty}>
-          No clear patterns yet. That is a real result: with {coverage.moodDays} days of data,
-          nothing stands out from chance.
-        </p>
+        <p className={styles.empty}>{t('patterns.none', { count: coverage.moodDays })}</p>
       )}
 
       {coverage.enough && quiet.length > 0 && (
         <details className={styles.quiet}>
-          <summary>Checked, nothing clear ({quiet.length})</summary>
+          <summary>{t('patterns.checked', { count: quiet.length })}</summary>
           <ul className={styles.quietList}>
             {quiet.map((r) => (
               <li key={`${r.factor.id}-${r.lag}`}>
                 {r.factor.emoji ? `${r.factor.emoji} ` : ''}
-                {r.factor.name}
-                {r.lag === 1 ? ' (day before)' : ''}: ρ {signed(r.rho)}, {r.n} days
+                {factorName(r.factor, tOr)}
+                {r.lag === 1 ? t('patterns.dayBeforeShort') : ''}: ρ {signed(r.rho)}, {t('patterns.days', { count: r.n })}
               </li>
             ))}
           </ul>

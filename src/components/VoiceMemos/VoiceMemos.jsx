@@ -1,5 +1,6 @@
 import { Button } from '../Button/Button.jsx';
 import { MAX_MEMO_SECONDS, formatDuration, useVoiceRecorder } from '../../hooks/useVoiceRecorder.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './VoiceMemos.module.css';
 
 export const MAX_MEMOS = 3;
@@ -7,6 +8,7 @@ export const MAX_MEMOS = 3;
 // Record, play back, and remove voice memos on the entry form. Hidden in
 // browsers that can't record.
 export function VoiceMemos({ memos, onChange }) {
+  const { t } = useI18n();
   const { supported, recording, seconds, error, start, stop } = useVoiceRecorder((memo) =>
     onChange([...memos, memo].slice(0, MAX_MEMOS)),
   );
@@ -16,7 +18,7 @@ export function VoiceMemos({ memos, onChange }) {
   return (
     <div className={styles.memos}>
       <p className={styles.label}>
-        Voice memos <span className={styles.optional}>(optional, up to {MAX_MEMOS})</span>
+        {t('voice.label')} <span className={styles.optional}>{t('voice.hint', { max: MAX_MEMOS })}</span>
       </p>
 
       {memos.length > 0 && (
@@ -24,13 +26,13 @@ export function VoiceMemos({ memos, onChange }) {
           {memos.map((memo, i) => (
             <li key={memo.recordedAt || i} className={styles.memo}>
               {/* eslint-disable-next-line jsx-a11y/media-has-caption -- the person's own voice memo; no captions exist */}
-              <audio controls src={memo.src} preload="metadata" aria-label={`Voice memo ${i + 1}`} />
+              <audio controls src={memo.src} preload="metadata" aria-label={t('voice.memo', { n: i + 1 })} />
               <span className={styles.duration}>{formatDuration(memo.duration || 0)}</span>
               <button
                 type="button"
                 className={styles.remove}
                 onClick={() => onChange(memos.filter((_, j) => j !== i))}
-                aria-label={`Remove voice memo ${i + 1}`}
+                aria-label={t('voice.remove', { n: i + 1 })}
               >
                 ×
               </button>
@@ -44,23 +46,23 @@ export function VoiceMemos({ memos, onChange }) {
           {recording ? (
             <>
               <Button type="button" small variant="danger" onClick={stop}>
-                ⏹️ Stop recording
+                ⏹️ {t('voice.stop')}
               </Button>
               <span className={styles.timer} role="status">
                 <span className={styles.dot} aria-hidden="true" />
-                Recording {formatDuration(seconds)} / {formatDuration(MAX_MEMO_SECONDS)}
+                {t('voice.recording', { elapsed: formatDuration(seconds), max: formatDuration(MAX_MEMO_SECONDS) })}
               </span>
             </>
           ) : (
             <Button type="button" small variant="secondary" onClick={start}>
-              🎙️ Record a voice memo
+              🎙️ {t('voice.record')}
             </Button>
           )}
         </div>
       )}
       {error && (
         <p className={styles.error} role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
     </div>

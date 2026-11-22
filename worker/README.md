@@ -51,6 +51,10 @@ Then point the app at it, in one of two ways:
 | PUT | `/v1/vaults/:id/journal` | `{ baseVersion, data }`. Returns 409 if another device synced first, 429 (with `Retry-After`) if it writes more than about once a second |
 | DELETE | `/v1/vaults/:id` | Deletes this journal's data and reminder |
 | POST | `/v1/vaults/:id/reflect` | `{ scope, entries }` → `{ text }` |
+| POST | `/v1/vaults/:id/ai/entry_organization` | Gemini: summary, tags, and a mood for one entry. See [GEMINI.md](GEMINI.md) |
+| POST | `/v1/vaults/:id/ai/weather_day_plan` | Gemini: a day plan from forecast numbers the app already loaded |
+| POST | `/v1/vaults/:id/ai/writing_prompt` | Gemini: one prompt to start writing |
+| POST | `/v1/vaults/:id/ai/journal_period_review` | Gemini: themes and moments from a period the person chose |
 | GET | `/v1/push/public-key` | VAPID public key |
 | PUT/DELETE | `/v1/vaults/:id/reminder` | `{ subscription, time, timeZone }` |
 

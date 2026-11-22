@@ -1,6 +1,8 @@
 import { useEntriesContext } from '../../context/EntriesContext.jsx';
 import { enabledHabits } from '../../lib/habits.js';
 import { describeGoal } from '../../lib/goals.js';
+import { habitName } from '../HabitFields/HabitFields.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './GoalSettings.module.css';
 
 // Sensible starting points when a goal is switched on.
@@ -18,6 +20,7 @@ function startingGoal(habit) {
 // Set a weekly goal for each tracked habit. Progress shows on Insights.
 export function GoalSettings() {
   const { habitConfig, setHabitConfig } = useEntriesContext();
+  const { t, tOr } = useI18n();
   const habits = enabledHabits(habitConfig);
   const goals = habitConfig.goals || {};
 
@@ -38,41 +41,41 @@ export function GoalSettings() {
   }
 
   if (habits.length === 0) {
-    return <p className={styles.text}>Turn on a habit above to set a goal for it.</p>;
+    return <p className={styles.text}>{t('goalSettings.needHabit')}</p>;
   }
 
   return (
     <div className={styles.goals}>
-      <p className={styles.text}>
-        Aim for a number of days each week (Monday to Sunday). Your progress shows on Insights.
-      </p>
+      <p className={styles.text}>{t('goalSettings.intro')}</p>
       <ul className={styles.list}>
         {habits.map((habit) => {
           const goal = goals[habit.id];
           const isNumber = habit.type !== 'boolean';
+          const name = habitName(habit, tOr);
+          const unit = tOr(`unit.${habit.unit}`, habit.unit);
           return (
             <li key={habit.id} className={styles.item}>
               <label className={styles.check}>
                 <input type="checkbox" checked={Boolean(goal)} onChange={() => toggle(habit)} />
-                <span aria-hidden="true">{habit.emoji}</span> {habit.name}
+                <span aria-hidden="true">{habit.emoji}</span> {name}
               </label>
               {goal && (
                 <div className={styles.fields}>
                   {isNumber && (
                     <>
                       <label className={styles.field}>
-                        <span className={styles.label}>{habit.name} goal type</span>
+                        <span className={styles.label}>{t('goalSettings.type', { habit: name })}</span>
                         <select
                           className={styles.select}
                           value={goal.direction}
                           onChange={(e) => change(habit, { direction: e.target.value })}
                         >
-                          <option value="atLeast">At least</option>
-                          <option value="atMost">At most</option>
+                          <option value="atLeast">{t('goalSettings.atLeast')}</option>
+                          <option value="atMost">{t('goalSettings.atMost')}</option>
                         </select>
                       </label>
                       <label className={styles.field}>
-                        <span className={styles.label}>{habit.name} amount ({habit.unit})</span>
+                        <span className={styles.label}>{t('goalSettings.amount', { habit: name, unit })}</span>
                         <input
                           className={styles.number}
                           type="number"
@@ -91,7 +94,7 @@ export function GoalSettings() {
                     </>
                   )}
                   <label className={styles.field}>
-                    <span className={styles.label}>{habit.name} days per week</span>
+                    <span className={styles.label}>{t('goalSettings.days', { habit: name })}</span>
                     <select
                       className={styles.select}
                       value={goal.days}
@@ -99,12 +102,12 @@ export function GoalSettings() {
                     >
                       {[1, 2, 3, 4, 5, 6, 7].map((n) => (
                         <option key={n} value={n}>
-                          {n} {n === 1 ? 'day' : 'days'}
+                          {t('goalSettings.dayOption', { count: n })}
                         </option>
                       ))}
                     </select>
                   </label>
-                  <p className={styles.summary}>{describeGoal(goal, habit)}</p>
+                  <p className={styles.summary}>{describeGoal(goal, habit, t, { name, unit })}</p>
                 </div>
               )}
             </li>

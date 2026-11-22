@@ -49,3 +49,10 @@ export function translate(language, key, values = {}) {
     values[name] === undefined ? match : typeof values[name] === 'number' ? values[name].toLocaleString(language) : String(values[name]),
   );
 }
+
+// For words that are stored data, like a mood or a weather type: shows the
+// translation when there is one, else the word as stored.
+export function translateOr(language, key, fallback, values) {
+  const message = translate(language, key, values);
+  return message === key ? fallback : message;
+}

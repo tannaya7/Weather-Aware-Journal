@@ -30,11 +30,19 @@ export function isValidGoal(goal, habit) {
   );
 }
 
-export function describeGoal(goal, habit) {
+// `t` (optional) words it in the app's language; `name` and `unit` can be
+// passed already translated. Without `t` it stays English.
+export function describeGoal(goal, habit, t, { name = habit.name, unit = habit.unit } = {}) {
+  if (t) {
+    const times = t('goals.times', { count: goal.days });
+    if (habit.type === 'boolean') return t('goals.boolean', { habit: name, times });
+    const key = goal.direction === 'atMost' ? 'goals.atMost' : 'goals.atLeast';
+    return t(key, { habit: name, threshold: goal.threshold, unit, times });
+  }
   const times = `${goal.days} ${goal.days === 1 ? 'day' : 'days'} a week`;
-  if (habit.type === 'boolean') return `${habit.name}: ${times}`;
+  if (habit.type === 'boolean') return `${name}: ${times}`;
   const how = goal.direction === 'atMost' ? 'at most' : 'at least';
-  return `${habit.name}: ${how} ${goal.threshold} ${habit.unit} on ${times}`;
+  return `${name}: ${how} ${goal.threshold} ${unit} on ${times}`;
 }
 
 function meetsOnDay(goal, habit, dayEntries) {
