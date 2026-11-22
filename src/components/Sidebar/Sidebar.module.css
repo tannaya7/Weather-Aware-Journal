@@ -10,6 +10,9 @@
   min-height: 100vh;
   position: sticky;
   top: 0;
+  /* With nine items, a short window must still reach every one. */
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .logo {

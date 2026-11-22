@@ -1,3 +1,4 @@
+import { useFocusTarget } from '../hooks/useFocusTarget.js';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
@@ -20,6 +21,7 @@ const promptHelper = ({ weatherType, onUse }) => (
 );
 
 export function EntryFormPage() {
+  useFocusTarget();
   const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();

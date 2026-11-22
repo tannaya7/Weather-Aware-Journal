@@ -67,7 +67,7 @@ export function PeriodReviewAi() {
 
   return (
     <section className={styles.section} aria-labelledby="gemini-review-heading">
-      <h2 id="gemini-review-heading" className={styles.heading}>
+      <h2 id="gemini-review-heading" className={styles.heading} tabIndex={-1}>
         {t('ai.review.title')}
       </h2>
       <p className={styles.note}>{t('ai.review.intro')}</p>

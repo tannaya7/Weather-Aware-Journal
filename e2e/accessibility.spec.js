@@ -7,6 +7,7 @@ const PAGES = [
   ['Entry', './#/entry/1'],
   ['Calendar', './#/calendar'],
   ['Insights', './#/insights'],
+  ['AI Tools', './#/ai'],
   ['Map', './#/map'],
   ['Export', './#/export'],
   ['Contact', './#/contact'],

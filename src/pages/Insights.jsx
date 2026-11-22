@@ -1,3 +1,4 @@
+import { useFocusTarget } from '../hooks/useFocusTarget.js';
 import { useMemo, useState } from 'react';
 import { Header } from '../components/Header/Header.jsx';
 import { useI18n } from '../i18n/I18nContext.jsx';
@@ -42,6 +43,7 @@ function StatTile({ label, value, detail }) {
 }
 
 export function Insights() {
+  useFocusTarget();
   const { t } = useI18n();
   const { entries, habitConfig } = useEntriesContext();
   const [weeks, setWeeks] = useState(26);

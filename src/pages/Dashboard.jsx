@@ -1,3 +1,4 @@
+import { useFocusTarget } from '../hooks/useFocusTarget.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
@@ -26,6 +27,7 @@ import styles from './Dashboard.module.css';
 const ITEMS_PER_PAGE = 6;
 
 export function Dashboard() {
+  useFocusTarget();
   const { t } = useI18n();
   const { entries, deleteEntry, importEntryList } = useEntriesContext();
   const navigate = useNavigate();
