@@ -38,7 +38,7 @@ export default {
   'search.meaning': 'अर्थ से',
   'search.meaningLabel': 'अर्थ से खोजें',
   'search.mood': 'मूड ट्रैकर',
-  'search.moodLabel': 'मूड का सारांश देखें',
+  'search.moodLabel': 'मूड ट्रैकर: मूड का सारांश देखें',
 
   'form.content': 'आपके मन में क्या है?',
   'form.placeholder': 'प्रिय डायरी…',
