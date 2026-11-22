@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { REVIEW_SIZE } from '../lib/yearReview.js';
 
+const REVOKE_DELAY_MS = 10000;
+
 // Renders a review card to a PNG blob (and a preview URL) by drawing the
 // summary with `draw(ctx, summary)`. Null until drawn, or when there is no
 // summary or no canvas support.
@@ -16,19 +18,26 @@ export function useReviewImage(summary, draw) {
     if (!ctx) return undefined;
 
     let cancelled = false;
-    let url = null;
     draw(ctx, summary);
     canvas.toBlob((blob) => {
       if (cancelled || !blob) return;
-      url = URL.createObjectURL(blob);
-      setImage({ url, blob });
+      setImage({ url: URL.createObjectURL(blob), blob });
     }, 'image/png');
 
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
     };
   }, [summary, draw]);
+
+  // A URL is freed a little after it stops being shown (a redraw, or leaving
+  // the page). Freeing it at once can pull it out from under an <img> that
+  // is still loading it, which fails with "file not found".
+  useEffect(() => {
+    if (!image) return undefined;
+    return () => {
+      setTimeout(() => URL.revokeObjectURL(image.url), REVOKE_DELAY_MS);
+    };
+  }, [image]);
 
   return image;
 }
