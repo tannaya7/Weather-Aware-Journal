@@ -8,6 +8,21 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Held back on purpose; revisit when the blocker below is gone.
+    ignore:
+      # React 19 adds about 20 KB gzipped to the first load, over our budget.
+      - dependency-name: react
+        update-types: ['version-update:semver-major']
+      - dependency-name: react-dom
+        update-types: ['version-update:semver-major']
+      # ESLint 10 isn't supported yet by eslint-plugin-react or jsx-a11y.
+      - dependency-name: eslint
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@eslint/js'
+        update-types: ['version-update:semver-major']
+      # Vitest 5 needs Vite 6.4+ and Node 22.12+; we are on Vite 5 and Node 20.
+      - dependency-name: vitest
+        update-types: ['version-update:semver-major']
     groups:
       app-minor-and-patch:
         update-types: [minor, patch]
