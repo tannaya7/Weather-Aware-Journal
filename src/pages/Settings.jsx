@@ -203,7 +203,7 @@ function PasskeySection({ onDone }) {
           </p>
           <PasscodeField
             id="passkeyPasscode"
-            label="Current passcode"
+            label="Current passcode, to set up a passkey"
             value={current}
             onChange={setCurrent}
             autoComplete="current-password"

@@ -62,7 +62,7 @@ describe('Fingerprint or face unlock', () => {
     await user.type(screen.getByLabelText('Passcode'), '2468');
     await user.click(screen.getByRole('button', { name: 'Unlock' }));
 
-    await user.type(await screen.findByLabelText('Current passcode', { selector: '#passkeyPasscode' }), '2468');
+    await user.type(await screen.findByLabelText('Current passcode, to set up a passkey'), '2468');
     await user.click(screen.getByRole('button', { name: 'Set up fingerprint or face unlock' }));
     expect(await screen.findByText('Fingerprint or face unlock is on.')).toBeInTheDocument();
     first.unmount();
@@ -86,7 +86,7 @@ describe('Fingerprint or face unlock', () => {
     await user.type(screen.getByLabelText('Passcode'), '2468');
     await user.click(screen.getByRole('button', { name: 'Unlock' }));
 
-    await user.type(await screen.findByLabelText('Current passcode', { selector: '#passkeyPasscode' }), '0000');
+    await user.type(await screen.findByLabelText('Current passcode, to set up a passkey'), '0000');
     await user.click(screen.getByRole('button', { name: 'Set up fingerprint or face unlock' }));
 
     expect(await screen.findByText("That passcode isn't right.")).toBeInTheDocument();
