@@ -15,14 +15,15 @@ function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Couldn't save the recording."));
+    reader.onerror = () => reject(new Error('voice.errSave'));
     reader.readAsDataURL(blob);
   });
 }
 
+// Errors are translation keys; VoiceMemos shows them in the app's language.
 const ERRORS = {
-  NotAllowedError: 'Microphone access is blocked. Allow it for this site to record.',
-  NotFoundError: 'No microphone was found.',
+  NotAllowedError: 'voice.errBlocked',
+  NotFoundError: 'voice.errNoMic',
 };
 
 // Records a voice memo from the microphone. Stops by itself after
@@ -52,7 +53,7 @@ export function useVoiceRecorder(onDone) {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
-      setError(ERRORS[err.name] || "Couldn't start the microphone.");
+      setError(ERRORS[err.name] || 'voice.errStart');
       return;
     }
 
@@ -81,7 +82,7 @@ export function useVoiceRecorder(onDone) {
           recordedAt: new Date().toISOString(),
         });
       } catch (err) {
-        setError(err.message);
+        setError(err.message === 'voice.errSave' ? err.message : 'voice.errSave');
       }
     };
 

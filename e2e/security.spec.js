@@ -73,7 +73,9 @@ test('encrypted backup downloads and restores', async ({ page }) => {
 
   await expect(page.getByRole('status').filter({ hasText: 'Restored 2 entries.' })).toBeVisible();
   await goTo(page, 'Home');
-  await expect(page.getByText('Backed up two')).toBeVisible();
+  // The link on the Home timeline: unlike the bare text, it can't also match
+  // the Export page's print preview while that page is still on screen.
+  await expect(page.getByRole('link', { name: 'Read entry: Backed up two' })).toBeVisible();
   expect(page.consoleErrors).toEqual([]);
 });
 

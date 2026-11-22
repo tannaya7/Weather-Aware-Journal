@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../Button/Button.jsx';
-import { passkeyErrorMessage } from '../../lib/passkey.js';
+import { passkeyErrorKey } from '../../lib/passkey.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './LockScreen.module.css';
 
 const ERASE_CONFIRM = 'ERASE';
@@ -9,6 +10,7 @@ const ERASE_CONFIRM = 'ERASE';
 // can't be recovered from, so the only way out of a forgotten one is to
 // erase the journal — which takes typing ERASE to confirm.
 export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
+  const { t } = useI18n();
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,7 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
     try {
       await onUnlockWithPasskey();
     } catch (err) {
-      setError(passkeyErrorMessage(err));
+      setError(t(passkeyErrorKey(err)));
       setBusy(false);
     }
   }
@@ -34,7 +36,7 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
     try {
       await onUnlock(passcode);
     } catch (err) {
-      setError(err.name === 'WrongPasscodeError' ? err.message : 'Something went wrong. Try again.');
+      setError(t(err.name === 'WrongPasscodeError' ? 'lock.wrong' : 'lock.failed'));
       setPasscode('');
       setBusy(false);
     }
@@ -46,26 +48,26 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
         <span className={styles.icon} aria-hidden="true">
           🔒
         </span>
-        <h1 className={styles.title}>Your journal is locked</h1>
+        <h1 className={styles.title}>{t('lock.title')}</h1>
 
         {onUnlockWithPasskey && (
           <>
             <Button type="button" onClick={handlePasskey} disabled={busy}>
-              <span aria-hidden="true">👆</span> Unlock with fingerprint or face
+              <span aria-hidden="true">👆</span> {t('lock.passkey')}
             </Button>
-            <p className={styles.or}>or use your passcode</p>
+            <p className={styles.or}>{t('lock.or')}</p>
           </>
         )}
 
         <label className="sr-only" htmlFor="unlockPasscode">
-          Passcode
+          {t('lock.passcode')}
         </label>
         <input
           id="unlockPasscode"
           className={styles.input}
           type="password"
           autoComplete="current-password"
-          placeholder="Passcode"
+          placeholder={t('lock.passcode')}
           // eslint-disable-next-line jsx-a11y/no-autofocus -- the lock screen's only job
           autoFocus
           value={passcode}
@@ -79,21 +81,19 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
           </p>
         )}
         <Button type="submit" variant={onUnlockWithPasskey ? 'secondary' : 'primary'} disabled={busy || !passcode}>
-          {busy ? 'Unlocking…' : 'Unlock'}
+          {busy ? t('lock.unlocking') : t('lock.unlock')}
         </Button>
 
         {!showErase ? (
           <button type="button" className={styles.link} onClick={() => setShowErase(true)}>
-            Forgot your passcode?
+            {t('lock.forgot')}
           </button>
         ) : (
           <div className={styles.erase}>
             <p>
-              Your entries are encrypted with your passcode, so without it they can&apos;t be
-              recovered. You can erase the journal and start over. <strong>This deletes every
-              entry on this device.</strong>
+              {t('lock.eraseText')} <strong>{t('lock.eraseWarning')}</strong>
             </p>
-            <label htmlFor="eraseConfirm">Type {ERASE_CONFIRM} to confirm</label>
+            <label htmlFor="eraseConfirm">{t('lock.typeToConfirm', { word: ERASE_CONFIRM })}</label>
             <input
               id="eraseConfirm"
               className={styles.input}
@@ -108,7 +108,7 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
                 disabled={eraseText !== ERASE_CONFIRM}
                 onClick={onErase}
               >
-                Erase journal
+                {t('lock.erase')}
               </Button>
               <Button
                 type="button"
@@ -118,7 +118,7 @@ export function LockScreen({ onUnlock, onUnlockWithPasskey, onErase }) {
                   setEraseText('');
                 }}
               >
-                Cancel
+                {t('lock.cancel')}
               </Button>
             </div>
           </div>

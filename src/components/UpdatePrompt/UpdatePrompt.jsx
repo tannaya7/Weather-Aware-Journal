@@ -1,4 +1,5 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './UpdatePrompt.module.css';
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
@@ -9,6 +10,7 @@ const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 // nothing reloads under someone mid-sentence. Tabs left open also check for
 // updates hourly.
 export function UpdatePrompt() {
+  const { t } = useI18n();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -24,16 +26,16 @@ export function UpdatePrompt() {
 
   return (
     <div className={styles.toast} role="status">
-      <span>A new version of Weather Journal is available.</span>
+      <span>{t('update.available')}</span>
       <button type="button" className={styles.refresh} onClick={() => updateServiceWorker(true)}>
-        Refresh
+        {t('update.refresh')}
       </button>
       <button
         type="button"
         className={styles.later}
         onClick={() => setNeedRefresh(false)}
-        aria-label="Dismiss update notification"
-        title="Later"
+        aria-label={t('update.dismiss')}
+        title={t('update.later')}
       >
         <span aria-hidden="true">×</span>
       </button>

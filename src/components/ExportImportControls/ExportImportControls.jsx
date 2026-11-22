@@ -3,10 +3,12 @@ import { Button } from '../Button/Button.jsx';
 import { buildExportFilename, serializeEntries } from '../../lib/exportImport.js';
 import { parseImportFiles } from '../../lib/importers.js';
 import { useAnnouncer } from '../../context/AnnouncerContext.jsx';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 
 export function ExportImportControls({ entries, onImport }) {
   const fileInputRef = useRef(null);
   const { announce } = useAnnouncer();
+  const { t } = useI18n();
 
   function download(text, type, fileName) {
     const url = URL.createObjectURL(new Blob([text], { type }));
@@ -22,7 +24,7 @@ export function ExportImportControls({ entries, onImport }) {
   // Everything, exactly as stored (it imports back with nothing lost).
   function handleExport() {
     download(serializeEntries(entries), 'application/json', buildExportFilename());
-    announce(`Exported ${entries.length} entries.`);
+    announce(t('transfer.exported', { count: entries.length }));
   }
 
   function handleImportClick() {
@@ -37,34 +39,31 @@ export function ExportImportControls({ entries, onImport }) {
     try {
       const { format, entries: found } = await parseImportFiles(files);
       if (found.length === 0) {
-        announce('No entries found in that file.', 'assertive');
+        announce(t('transfer.noneFound'), 'assertive');
         return;
       }
       const result = await onImport(found);
-      announce(
-        `Imported ${result.importedCount} entr${result.importedCount === 1 ? 'y' : 'ies'} from ${format}.${
-          result.skippedCount ? ` Skipped ${result.skippedCount} already here or unreadable.` : ''
-        }`,
-        'assertive',
-      );
+      const imported = t('transfer.imported', { count: result.importedCount, format });
+      const skipped = result.skippedCount ? ` ${t('transfer.skipped', { count: result.skippedCount })}` : '';
+      announce(imported + skipped, 'assertive');
     } catch (error) {
-      announce(error.message || 'Import failed.', 'assertive');
+      announce(error.message || t('transfer.failed'), 'assertive');
     }
   }
 
   return (
     <>
-      <Button type="button" variant="secondary" small onClick={handleExport} aria-label="Export all entries as JSON">
-        Export
+      <Button type="button" variant="secondary" small onClick={handleExport} aria-label={t('transfer.exportLabel')}>
+        {t('transfer.export')}
       </Button>
       <Button
         type="button"
         variant="secondary"
         small
         onClick={handleImportClick}
-        aria-label="Import entries from this app, Day One, or Markdown files"
+        aria-label={t('transfer.importLabel')}
       >
-        Import
+        {t('transfer.import')}
       </Button>
       <input
         ref={fileInputRef}

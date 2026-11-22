@@ -105,11 +105,8 @@ export function SemanticProvider({ children }) {
       setPhase('error');
       setModelPercent(null);
       setProgress(null);
-      setError(
-        navigator.onLine === false
-          ? 'You are offline, and the search model is not downloaded yet. Try again when you are back online.'
-          : 'Could not load the search model. Check your connection and try again.',
-      );
+      // A translation key; SemanticSettings shows it in the app's language.
+      setError(navigator.onLine === false ? 'semantic.errOffline' : 'semantic.errLoad');
       console.warn('Search by meaning failed', err);
     } finally {
       runningRef.current = false;

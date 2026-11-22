@@ -7,6 +7,7 @@ import { stripMarkdown, checklistProgress } from '../../lib/richText.js';
 import { getEntryImages } from '../../lib/entryImages.js';
 import { Highlight } from '../Highlight/Highlight.jsx';
 import { hasConflict } from '../../lib/entryHistory.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './EntryCard.module.css';
 
 // The preview shows two lines, so blank lines (often right under the title)
@@ -16,7 +17,8 @@ function previewText(content) {
 }
 
 export function EntryCard({ entry, onEdit, onDelete, highlight }) {
-  const { day, weekday } = getDateBadgeParts(entry.date);
+  const { t, tOr, language } = useI18n();
+  const { day, weekday } = getDateBadgeParts(entry.date, language);
   const title = getEntryTitle(entry);
   const checks = checklistProgress(entry.content);
   const voiceCount = (entry.audio || []).length;
@@ -32,13 +34,13 @@ export function EntryCard({ entry, onEdit, onDelete, highlight }) {
       <Link
         to={`/entry/${entry.id}`}
         className={styles.linkArea}
-        aria-label={`Read entry: ${title}`}
+        aria-label={t('card.read', { title })}
         style={{ fontFamily: fontFamilyFor(entry) }}
       >
         <div className={styles.metaRow}>
           {entry.mood && (
             <span>
-              <span aria-hidden="true">{emojiForMood(entry.mood)}</span> {entry.mood}
+              <span aria-hidden="true">{emojiForMood(entry.mood)}</span> {tOr(`mood.${entry.mood}`, entry.mood)}
             </span>
           )}
           {entry.weatherIcon && (
@@ -53,25 +55,19 @@ export function EntryCard({ entry, onEdit, onDelete, highlight }) {
         </p>
         {hasConflict(entry) && (
           <p className={styles.extras}>
-            <span>⚠️ Edited on two devices: needs a look</span>
+            <span>⚠️ {t('card.conflict')}</span>
           </p>
         )}
         {(checks.total > 0 || voiceCount > 0 || photoCount > 0) && (
           <p className={styles.extras}>
             {checks.total > 0 && (
-              <span>
-                ☑️ {checks.done}/{checks.total} done
-              </span>
+              <span>☑️ {t('card.checks', { done: checks.done, total: checks.total })}</span>
             )}
             {voiceCount > 0 && (
-              <span>
-                🎙️ {voiceCount} {voiceCount === 1 ? 'voice memo' : 'voice memos'}
-              </span>
+              <span>🎙️ {t('card.voice', { count: voiceCount })}</span>
             )}
             {photoCount > 0 && (
-              <span>
-                📷 {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
-              </span>
+              <span>📷 {t('card.photos', { count: photoCount })}</span>
             )}
           </p>
         )}
@@ -90,18 +86,18 @@ export function EntryCard({ entry, onEdit, onDelete, highlight }) {
         <button
           type="button"
           className={styles.iconBtn}
-          aria-label={`Edit entry "${title}"`}
+          aria-label={t('card.editLabel', { title })}
           onClick={() => onEdit(entry.id)}
         >
-          Edit
+          {t('card.edit')}
         </button>
         <button
           type="button"
           className={`${styles.iconBtn} ${styles.deleteBtn}`}
-          aria-label={`Delete entry "${title}"`}
+          aria-label={t('card.deleteLabel', { title })}
           onClick={() => onDelete(entry.id)}
         >
-          Delete
+          {t('card.delete')}
         </button>
       </div>
     </li>

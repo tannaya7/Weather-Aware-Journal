@@ -9,11 +9,13 @@ import {
   reportsAsText,
   setSendingEnabled,
 } from '../../lib/errorReport.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './DiagnosticsSettings.module.css';
 
 // Error reports: what was kept on this device, a way to copy them for a
 // support message, and an opt-in to send them (never with journal text).
 export function DiagnosticsSettings() {
+  const { t, language } = useI18n();
   const [reports, setReports] = useState(readReports);
   const [sending, setSending] = useState(isSendingEnabled);
   const [message, setMessage] = useState('');
@@ -21,15 +23,11 @@ export function DiagnosticsSettings() {
 
   return (
     <div className={styles.diagnostics}>
-      <p className={styles.text}>
-        When something goes wrong, the app keeps a short report on this device: the kind of error, where in the
-        code, which page, and the app version (v{APP_VERSION}). Never what you wrote: quoted text, numbers,
-        addresses, and entry ids are removed first.
-      </p>
+      <p className={styles.text}>{t('diag.about', { version: APP_VERSION })}</p>
       <p className={styles.text}>
         {reports.length === 0
-          ? 'No errors recorded.'
-          : `${reports.length} ${reports.length === 1 ? 'error' : 'errors'} recorded, the latest at ${new Date(reports[0].at).toLocaleString()}.`}
+          ? t('diag.none')
+          : t('diag.count', { count: reports.length, when: new Date(reports[0].at).toLocaleString(language) })}
       </p>
       {reports.length > 0 && (
         <div className={styles.actions}>
@@ -40,11 +38,11 @@ export function DiagnosticsSettings() {
             onClick={() =>
               navigator.clipboard
                 ?.writeText(reportsAsText(reports))
-                .then(() => setMessage('Copied. Paste it into a message if you want help.'))
-                .catch(() => setMessage('Could not copy on this browser.'))
+                .then(() => setMessage(t('diag.copied')))
+                .catch(() => setMessage(t('diag.copyFailed')))
             }
           >
-            Copy the reports
+            {t('diag.copy')}
           </Button>
           <Button
             type="button"
@@ -56,7 +54,7 @@ export function DiagnosticsSettings() {
               setMessage('');
             }}
           >
-            Clear them
+            {t('diag.clear')}
           </Button>
         </div>
       )}
@@ -71,10 +69,10 @@ export function DiagnosticsSettings() {
               setSending(e.target.checked);
             }}
           />
-          Also send these reports to the sync server, to help fix problems
+          {t('diag.send')}
         </label>
       ) : (
-        <p className={styles.text}>Reports stay on this device (there is no server set up to send them to).</p>
+        <p className={styles.text}>{t('diag.local')}</p>
       )}
     </div>
   );

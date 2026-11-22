@@ -104,6 +104,7 @@ export function moodOutlook(entries, today = new Date()) {
   const buckets = weekdayStats(days);
   const weekdays = buckets.map((scores, i) => ({
     weekday: WEEKDAYS[i],
+    index: i,
     days: scores.length,
     average: scores.length ? mean(scores) : null,
   }));
@@ -116,6 +117,7 @@ export function moodOutlook(entries, today = new Date()) {
   const tomorrow = reliable
     ? {
         weekday: WEEKDAYS[tomorrowWeekday],
+        index: tomorrowWeekday,
         expected: predictFrom(buckets, overall, tomorrowWeekday),
         label: describeMood(predictFrom(buckets, overall, tomorrowWeekday)),
         basedOn: buckets[tomorrowWeekday].length,

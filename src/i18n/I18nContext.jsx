@@ -1,12 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LANGUAGES } from './messages.js';
-import { DEFAULT_LANGUAGE, initialLanguage, isSupported, saveLanguage, translate } from './translate.js';
+import { DEFAULT_LANGUAGE, initialLanguage, isSupported, saveLanguage, translate, translateOr } from './translate.js';
 
-const I18nContext = createContext({
+// Exported for class components (ErrorBoundary), which can't call hooks.
+export const I18nContext = createContext({
   language: DEFAULT_LANGUAGE,
   languages: LANGUAGES,
   setLanguage: () => {},
   t: (key, values) => translate(DEFAULT_LANGUAGE, key, values),
+  tOr: (key, fallback, values) => translateOr(DEFAULT_LANGUAGE, key, fallback, values),
 });
 
 // The app's language. Remembered on this device, and set on <html lang> so
@@ -25,7 +27,13 @@ export function I18nProvider({ children, initial }) {
   }, []);
 
   const value = useMemo(
-    () => ({ language, languages: LANGUAGES, setLanguage, t: (key, values) => translate(language, key, values) }),
+    () => ({
+      language,
+      languages: LANGUAGES,
+      setLanguage,
+      t: (key, values) => translate(language, key, values),
+      tOr: (key, fallback, values) => translateOr(language, key, fallback, values),
+    }),
     [language, setLanguage],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

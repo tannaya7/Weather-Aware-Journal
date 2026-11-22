@@ -3,6 +3,7 @@ import { deleteVault, getJournal, getVersion, putJournal } from './vault.js';
 import { reflect } from './reflect.js';
 import { receiveError } from './errors.js';
 import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push.js';
+import { aiTask } from './gemini.js';
 
 // Weather Journal's optional server (Cloudflare Worker + KV):
 //   GET    /v1/health
@@ -11,6 +12,10 @@ import { deleteReminder, publicKey, putReminder, sendDueReminders } from './push
 //   PUT    /v1/vaults/:id/journal      { baseVersion, data } -> new version, or 409
 //   DELETE /v1/vaults/:id              remove everything for this journal
 //   POST   /v1/vaults/:id/reflect      AI reflection on entries the app sends
+//   POST   /v1/vaults/:id/ai/entry_organization     Gemini: summary, tags, mood for one entry
+//   POST   /v1/vaults/:id/ai/weather_day_plan       Gemini: a day plan from forecast numbers
+//   POST   /v1/vaults/:id/ai/writing_prompt         Gemini: one prompt to start writing
+//   POST   /v1/vaults/:id/ai/journal_period_review  Gemini: themes and moments from a period
 //   GET    /v1/push/public-key         VAPID public key
 //   POST   /v1/errors                  a scrubbed error report (logged, not stored)
 //   PUT    /v1/vaults/:id/reminder     daily reminder time + push subscription
@@ -26,6 +31,10 @@ const ROUTES = [
   ['PUT', /^\/v1\/vaults\/([^/]+)\/journal$/, putJournal],
   ['DELETE', /^\/v1\/vaults\/([^/]+)$/, deleteVault],
   ['POST', /^\/v1\/vaults\/([^/]+)\/reflect$/, reflect],
+  ['POST', /^\/v1\/vaults\/([^/]+)\/ai\/entry_organization$/, aiTask('entry_organization')],
+  ['POST', /^\/v1\/vaults\/([^/]+)\/ai\/weather_day_plan$/, aiTask('weather_day_plan')],
+  ['POST', /^\/v1\/vaults\/([^/]+)\/ai\/writing_prompt$/, aiTask('writing_prompt')],
+  ['POST', /^\/v1\/vaults\/([^/]+)\/ai\/journal_period_review$/, aiTask('journal_period_review')],
   ['PUT', /^\/v1\/vaults\/([^/]+)\/reminder$/, putReminder],
   ['DELETE', /^\/v1\/vaults\/([^/]+)\/reminder$/, deleteReminder],
 ];
