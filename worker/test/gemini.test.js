@@ -20,7 +20,8 @@ function fakeFetch(body, status = 200) {
   return vi.fn(async () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }));
 }
 
-const deps = (fetchImpl, extra = {}) => ({ fetch: fetchImpl, now: () => T0 + 1, ...extra });
+// retryDelayMs: 0 so the one retry after a temporary Gemini error does not slow the tests.
+const deps = (fetchImpl, extra = {}) => ({ fetch: fetchImpl, now: () => T0 + 1, retryDelayMs: 0, ...extra });
 const post = (task, body, ctx, opts) => handle(req('POST', `/v1/vaults/${VAULT}/ai/${task}`, { body, ...opts }), ctx.env, ctx.deps);
 
 async function setup(replyValue, extra = {}) {
@@ -418,6 +419,68 @@ describe('failures are failures', () => {
     } finally {
       spies.forEach((s) => s.mockRestore());
     }
+  });
+});
+
+// Answers in order, then keeps repeating the last one.
+function fetchSequence(...answers) {
+  const queue = [...answers];
+  return vi.fn(async () => {
+    const next = queue.length > 1 ? queue.shift() : queue[0];
+    return new Response(JSON.stringify(next.body), { status: next.status ?? 200, headers: { 'content-type': 'application/json' } });
+  });
+}
+
+describe('a temporary Gemini server error is tried once more', () => {
+  const OK = { body: geminiReply(asJson(PROMPT_REPLY)) };
+  const run = async (fetchImpl, extra = {}) => {
+    const env = await syncedEnv();
+    const res = await post('writing_prompt', { date: '2026-11-22' }, { env, deps: deps(fetchImpl, extra) });
+    return { res, body: await res.json() };
+  };
+
+  it('a 503 ("high demand") followed by an answer gives the person the answer', async () => {
+    const fetchImpl = fetchSequence({ status: 503, body: { error: { message: 'high demand' } } }, OK);
+    const { res, body } = await run(fetchImpl);
+    expect(res.status).toBe(200);
+    expect(body.prompt).toBe(PROMPT_REPLY.prompt);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('the retry does not use up the daily limit', async () => {
+    const { body } = await run(fetchSequence({ status: 500, body: {} }, OK));
+    expect(body.remainingToday).toBe(PER_JOURNAL_DAILY - 1);
+  });
+
+  it('two failures in a row still end as a clear failure, after exactly two attempts', async () => {
+    const fetchImpl = fetchSequence({ status: 503, body: {} });
+    const { res, body } = await run(fetchImpl);
+    expect(res.status).toBe(502);
+    expect(body.code).toBe('provider');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('quota, a bad key, a blocked reply and a timeout are not retried', async () => {
+    for (const fetchImpl of [
+      fetchSequence({ status: 429, body: {} }),
+      fetchSequence({ status: 403, body: {} }),
+      fetchSequence({ status: 400, body: {} }),
+      fetchSequence({ body: { promptFeedback: { blockReason: 'SAFETY' } } }),
+    ]) {
+      await run(fetchImpl);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    }
+    const slow = vi.fn((url, init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })))));
+    const { res } = await run(slow, { timeoutMs: 20 });
+    expect(res.status).toBe(504);
+    expect(slow).toHaveBeenCalledTimes(1);
+  });
+
+  it('an unusable reply is not retried either', async () => {
+    const fetchImpl = fetchSequence({ body: geminiReply('not json at all') });
+    const { res } = await run(fetchImpl);
+    expect(res.status).toBe(502);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -371,10 +371,29 @@ ${excerpts || 'none'}`,
 // --- Talking to Gemini -------------------------------------------------------
 
 export class GeminiError extends Error {
-  constructor(kind) {
+  constructor(kind, status = null) {
     super(kind);
     this.name = 'GeminiError';
     this.kind = kind;
+    this.status = status; // Gemini's HTTP status, when it answered with one
+  }
+}
+
+const RETRY_DELAY_MS = 1500;
+
+// Gemini sometimes answers with a temporary server error of its own ("this
+// model is currently experiencing high demand", HTTP 503). That is not the
+// person's doing, so ask once more after a short pause. Nothing else is
+// retried (quota, timeouts, blocked replies, bad requests, unusable replies),
+// and the retry does not count against the person's daily limit.
+async function askGemini(args, delayMs = RETRY_DELAY_MS) {
+  try {
+    return await callGemini(args);
+  } catch (err) {
+    if (!(err instanceof GeminiError) || err.kind !== 'provider' || !(err.status >= 500)) throw err;
+    console.warn('gemini: temporary server error, trying once more');
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return callGemini(args);
   }
 }
 
@@ -429,6 +448,7 @@ export async function callGemini({
             : status === 400
               ? 'request'
               : 'provider',
+        status,
       );
     }
     if (data?.promptFeedback?.blockReason) throw new GeminiError('blocked');
@@ -526,20 +546,29 @@ export function aiTask(taskName) {
 
     try {
       const { system, user } = task.prompt(input);
-      const reply = await callGemini({
-        env,
-        model,
-        system,
-        user,
-        maxOutputTokens: task.maxOutputTokens,
-        fetchImpl: deps.fetch,
-        timeoutMs: deps.timeoutMs,
-      });
+      const reply = await askGemini(
+        {
+          env,
+          model,
+          system,
+          user,
+          maxOutputTokens: task.maxOutputTokens,
+          fetchImpl: deps.fetch,
+          timeoutMs: deps.timeoutMs,
+        },
+        deps.retryDelayMs,
+      );
       const output = task.parseOutput(reply, input);
-      if (!output) return failure('malformed');
+      if (!output) {
+        console.warn(`gemini ${taskName}: malformed`);
+        return failure('malformed');
+      }
       return json({ ...output, remainingToday: PER_JOURNAL_DAILY - Number(journalUsed || 0) - 1 });
     } catch (err) {
       if (!(err instanceof GeminiError)) throw err;
+      // Only which task and what kind of failure (never any text), so a
+      // failure can be told apart: overload, quota, timeout, blocked, ...
+      console.warn(`gemini ${taskName}: ${err.kind}`);
       return failure(err.kind);
     }
   };

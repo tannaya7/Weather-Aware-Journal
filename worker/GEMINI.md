@@ -36,6 +36,20 @@ The day plan uses the forecast the card already loaded when the person pressed "
 - Your project's free-tier request limits. Google's rate-limit page does not state numbers for these models; check them in AI Studio.
 - How it looks and behaves in a real browser, in both themes and on a phone, and a deployed Worker.
 
+## Run it on your own computer (no deploy)
+
+For personal use you do not need Cloudflare or any deployment. From the project root:
+
+```bash
+npm install
+npm install --prefix worker
+npm run local
+```
+
+That starts the server on `http://localhost:8787` and the app on `http://localhost:5173/Weather-Aware-Journal/`, and opens the app. Stop both with Ctrl+C. The server keeps its data in `.weather-journal-local/kv.json` in your home folder (outside the project), so sync and the helpers keep working after a restart. In the app, open **Settings → Sync across devices → Turn on sync** once; the Gemini helpers use that.
+
+Put the key in one of: the `GEMINI_API_KEY` environment variable, `worker/.dev.vars` (git-ignored), or `gemini.env` in your home folder (keeps it out of project and cloud-synced folders). If a Gemini request fails with a temporary server error, the server already retried once; pressing the button again usually works. The server prints only the task name and kind of failure (for example `gemini journal_period_review: provider`), never any text.
+
 ## Set up the key (server side only)
 
 ```bash
@@ -58,4 +72,4 @@ Free tiers have usage limits, and Google can change them. The app never promises
 
 ## Limits
 
-Per journal: 6 requests a minute and 30 a day, across all four tasks. Whole server: 500 a day (`GEMINI_GLOBAL_DAILY`). Request body at most 64 KB. One attempt per request and a 20-second timeout; nothing retries by itself, so "Try again" is a new request the person chose, and double-presses send once. Replies cut off by the length limit count as failures. The limits are KV counters, so they are approximate and use about 3 KV writes per request (the free KV tier allows 1,000 writes a day, so roughly 330 requests a day).
+Per journal: 6 requests a minute and 30 a day, across all four tasks. Whole server: 500 a day (`GEMINI_GLOBAL_DAILY`). Request body at most 64 KB. Each press makes one request with a 20-second timeout, and double-presses send once. The only automatic retry: if Gemini itself answers with a temporary server error (such as "high demand", HTTP 503), the server tries once more after a short pause, and that retry does not count against the daily limit. Quota limits, timeouts, blocked replies and unusable replies are never retried, and "Try again" in the app is a new request the person chooses. Replies cut off by the length limit count as failures. The limits are KV counters, so they are approximate and use about 3 KV writes per request (the free KV tier allows 1,000 writes a day, so roughly 330 requests a day).

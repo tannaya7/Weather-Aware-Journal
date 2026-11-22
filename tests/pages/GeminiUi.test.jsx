@@ -20,7 +20,7 @@ import { handle } from '../../worker/src/index.js';
 function startServer({ key = 'test-key', gemini, weather = vi.fn() } = {}) {
   const store = new Map();
   let clock = Date.now();
-  const deps = { now: () => (clock += 2000), fetch: gemini };
+  const deps = { now: () => (clock += 2000), fetch: gemini, retryDelayMs: 0 };
   const env = {
     ALLOWED_ORIGINS: '',
     ...(key ? { GEMINI_API_KEY: key } : {}),
@@ -351,7 +351,7 @@ describe('Plan my day', () => {
   });
 
   it('shows a failure as a failure, with a way to try again', async () => {
-    const gemini = fakeGemini({ status: 500, body: {} }, { body: reply(PLAN) });
+    const gemini = fakeGemini({ status: 500, body: {} }, { status: 500, body: {} }, { body: reply(PLAN) });
     const { user } = await setUp(gemini);
     await user.click(screen.getByRole('button', { name: 'Check the forecast' }));
     await agree(user);
@@ -589,14 +589,25 @@ describe('Review a period', () => {
   });
 
   it('shows a failure in words, and a retry is a new request', async () => {
-    const gemini = fakeGemini({ status: 500, body: {} }, { body: reply(REVIEW) });
+    const gemini = fakeGemini({ status: 500, body: {} }, { status: 500, body: {} }, { body: reply(REVIEW) });
     const { user, region } = await setUp(many(5), gemini);
     await user.click(within(region).getByRole('button', { name: /Review this period/ }));
     expect(await within(region).findByRole('alert')).toHaveTextContent('The AI service had a problem');
-    expect(gemini).toHaveBeenCalledTimes(1);
+    expect(gemini).toHaveBeenCalledTimes(2);
     await user.click(within(region).getByRole('button', { name: 'Try again' }));
     expect(await within(region).findByText('Long walks')).toBeInTheDocument();
+    expect(gemini).toHaveBeenCalledTimes(3);
+  });
+
+  it('a temporary Gemini overload is retried once for you, and you just see the result', async () => {
+    const gemini = fakeGemini({ status: 503, body: { error: { message: 'high demand' } } }, { body: reply(REVIEW) });
+    const { user, region } = await setUp(many(5), gemini);
+    await user.click(within(region).getByRole('button', { name: /Review this period/ }));
+    expect(await within(region).findByText('Long walks')).toBeInTheDocument();
+    expect(within(region).queryByRole('alert')).not.toBeInTheDocument();
     expect(gemini).toHaveBeenCalledTimes(2);
+    // It cost one request of the daily limit, not two.
+    expect(within(region).getByText('Requests left today: 29')).toBeInTheDocument();
   });
 
   it('is in Hindi when the app is', async () => {

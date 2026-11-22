@@ -41,6 +41,10 @@ The app is designed writing-first: the only thing an entry ever requires is some
 
 ## 🚀 Getting Started
 
+**Just want to use it, with the optional server and AI helpers, on your own computer?** Put your Gemini key in `gemini.env` in your home folder (one line: `GEMINI_API_KEY=...`), then run `npm install`, `npm install --prefix worker` and `npm run local`. Nothing is deployed. Details in [worker/GEMINI.md](worker/GEMINI.md).
+
+To run only the app (no server, no AI helpers):
+
 ```bash
 npm install
 npm run dev       # start the Vite dev server
