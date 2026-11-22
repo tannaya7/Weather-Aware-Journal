@@ -38,7 +38,7 @@ export default {
   'search.meaning': 'By meaning',
   'search.meaningLabel': 'Search by meaning',
   'search.mood': 'Mood tracker',
-  'search.moodLabel': 'View mood summary',
+  'search.moodLabel': 'Mood tracker: view mood summary',
 
   'form.content': "What's on your mind?",
   'form.placeholder': 'Dear journal…',

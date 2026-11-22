@@ -38,7 +38,7 @@ export default {
   'search.meaning': 'Por significado',
   'search.meaningLabel': 'Buscar por significado',
   'search.mood': 'Estado de ánimo',
-  'search.moodLabel': 'Ver el resumen del estado de ánimo',
+  'search.moodLabel': 'Estado de ánimo: ver el resumen',
 
   'form.content': '¿Qué tienes en mente?',
   'form.placeholder': 'Querido diario…',
