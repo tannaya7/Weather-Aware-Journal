@@ -25,6 +25,7 @@ const MapPage = lazyPage(() => import('./pages/MapPage.jsx'), 'MapPage');
 const Insights = lazyPage(() => import('./pages/Insights.jsx'), 'Insights');
 const ExportPage = lazyPage(() => import('./pages/ExportPage.jsx'), 'ExportPage');
 const Settings = lazyPage(() => import('./pages/Settings.jsx'), 'Settings');
+const AiTools = lazyPage(() => import('./pages/AiTools.jsx'), 'AiTools');
 
 export function App() {
   return (
@@ -43,6 +44,7 @@ export function App() {
                     <Route path="/entry/:id" element={<EntryDetail />} />
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/insights" element={<Insights />} />
+                    <Route path="/ai" element={<AiTools />} />
                     <Route path="/map" element={<MapPage />} />
                     <Route path="/export" element={<ExportPage />} />
                     <Route path="/contact" element={<Contact />} />

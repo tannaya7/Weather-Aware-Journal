@@ -46,7 +46,7 @@ export function ForecastPrompt({ entries }) {
   return (
     <section className={styles.card} aria-labelledby="forecast-heading">
       <div className={styles.head}>
-        <h2 id="forecast-heading" className={styles.heading}>
+        <h2 id="forecast-heading" className={styles.heading} tabIndex={-1}>
           {t('forecast.heading')}
         </h2>
         <Button type="button" variant="secondary" onClick={check} disabled={status === 'loading'}>

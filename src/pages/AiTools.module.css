@@ -1,0 +1,55 @@
+.page {
+  padding-top: var(--space-5);
+  max-width: 760px;
+}
+
+.text {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--space-3);
+}
+
+.status {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-5);
+  line-height: 1.5;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-lg);
+}
+
+.name {
+  font-family: var(--font-reading);
+  font-size: 20px;
+  margin: 0 0 var(--space-2);
+}
+
+.sends,
+.where {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0 0 var(--space-2);
+}
+
+.go {
+  display: inline-block;
+  margin-top: var(--space-2);
+  color: var(--color-accent);
+  font-weight: 600;
+}

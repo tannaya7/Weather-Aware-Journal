@@ -44,7 +44,7 @@ export function EntryOrganizer({ entry }) {
 
   return (
     <section className={styles.section} aria-labelledby="gemini-organize-heading">
-      <h2 id="gemini-organize-heading" className={styles.heading}>
+      <h2 id="gemini-organize-heading" className={styles.heading} tabIndex={-1}>
         {t('ai.org.heading')}
       </h2>
       <p className={styles.note}>{t('ai.org.intro')}</p>

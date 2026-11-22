@@ -1,3 +1,4 @@
+import { useFocusTarget } from '../hooks/useFocusTarget.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
 import { useI18n } from '../i18n/I18nContext.jsx';
@@ -70,6 +71,7 @@ function HabitChips({ values, habits }) {
 }
 
 export function EntryDetail() {
+  useFocusTarget();
   const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
