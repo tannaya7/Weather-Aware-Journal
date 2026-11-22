@@ -14,6 +14,7 @@ import { allHabits } from '../lib/habits.js';
 import { SkyDetails } from '../components/SkyDetails/SkyDetails.jsx';
 import { RichText } from '../components/RichText/RichText.jsx';
 import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { Suspense, lazy } from 'react';
 import { ConflictNotice, EntryHistory } from '../components/EntryVersions/EntryVersions.jsx';
 import { hasConflict } from '../lib/entryHistory.js';
 import { toggleChecklistLine } from '../lib/richText.js';
@@ -21,6 +22,9 @@ import { relatedEntries } from '../lib/search.js';
 import { formatDuration } from '../hooks/useVoiceRecorder.js';
 import { Link } from 'react-router-dom';
 import styles from './EntryDetail.module.css';
+
+// Loaded only when an entry is opened, so it stays out of the first load.
+const EntryOrganizer = lazy(() => import('../components/GeminiHelpers/EntryOrganizer.jsx').then((m) => ({ default: m.EntryOrganizer })));
 
 const MAX_RELATED = 5;
 
@@ -183,6 +187,8 @@ export function EntryDetail() {
         <section className={styles.related} aria-label="Reflect">
           <Reflection scope="entry" entry={entry} />
         </section>
+
+        <Suspense fallback={null}><EntryOrganizer entry={entry} /></Suspense>
 
         <EntryHistory entry={entry} onRestore={(fields) => updateEntry(entry.id, fields)} />
 

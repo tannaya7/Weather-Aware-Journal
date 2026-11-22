@@ -1,10 +1,11 @@
 {
-  "initialJsKb": 115,
+  "note": "Raised on 2026-11-22 for the English, Spanish and Hindi text (about 30 KB gzipped, loaded up front) and the four Gemini helpers' strings. Loading Spanish and Hindi only when chosen would take about 21 KB off the first load; that is a follow-up, not done here.",
+  "initialJsKb": 145,
   "initialCssKb": 12,
   "defaultChunkKb": 25,
   "chunkKb": {
     "MapPage": 55,
     "transformers.web": 190
   },
-  "precacheKb": 230
+  "precacheKb": 250
 }

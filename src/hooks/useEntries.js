@@ -36,7 +36,7 @@ import { recordEdit } from '../lib/entryHistory.js';
 // StorageFullError) rejects and leaves the list as it actually is on disk.
 // Settings kept with the journal; they're re-saved whenever the lock
 // changes (which clears and re-encrypts the meta store).
-const SETTING_NAMES = ['habits', 'sync', 'tombstones', 'ai', 'semantic'];
+const SETTING_NAMES = ['habits', 'sync', 'tombstones', 'ai', 'semantic', 'geminiAi'];
 
 async function loadAllSettings(key) {
   const values = await Promise.all(SETTING_NAMES.map((name) => loadSetting(name, key)));

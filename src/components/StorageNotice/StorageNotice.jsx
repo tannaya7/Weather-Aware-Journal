@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatBytes, getStorageStatus } from '../../lib/storageQuota.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './StorageNotice.module.css';
 
 const RECHECK_MS = 5 * 60 * 1000;
@@ -9,6 +10,7 @@ const RECHECK_MS = 5 * 60 * 1000;
 // journal, before saving starts to fail. Stays out of the way otherwise.
 // The live region is always present so the notice is announced when it shows.
 export function StorageNotice() {
+  const { t } = useI18n();
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
@@ -32,12 +34,13 @@ export function StorageNotice() {
       {show && (
         <p className={styles.bar} data-level={status.level}>
           <span>
-            {status.level === 'critical'
-              ? `This device is almost out of space for the journal (${formatBytes(status.usage)} of ${formatBytes(status.quota)}). New entries and photos may not save.`
-              : `Space for the journal is getting low (${formatBytes(status.usage)} of ${formatBytes(status.quota)}).`}
+            {t(status.level === 'critical' ? 'storage.critical' : 'storage.low', {
+              used: formatBytes(status.usage),
+              quota: formatBytes(status.quota),
+            })}
           </span>
           <Link to="/settings" className={styles.link}>
-            See what is using it
+            {t('storage.seeUsage')}
           </Link>
         </p>
       )}

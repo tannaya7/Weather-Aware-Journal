@@ -1,19 +1,23 @@
 import { prefixLines, wrapSelection } from '../../lib/richText.js';
-import { TEMPLATES, applyTemplate } from '../../lib/templates.js';
+import { applyTemplate, templatesFor } from '../../lib/templates.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './FormatToolbar.module.css';
 
 const ACTIONS = [
-  { label: 'Bold', icon: 'B', className: 'bold', run: (t, s, e) => wrapSelection(t, s, e, '**') },
-  { label: 'Italic', icon: 'I', className: 'italic', run: (t, s, e) => wrapSelection(t, s, e, '*') },
-  { label: 'Heading', icon: 'H', run: (t, s, e) => prefixLines(t, s, e, '# ') },
-  { label: 'Bulleted list', icon: '•', run: (t, s, e) => prefixLines(t, s, e, '- ') },
-  { label: 'Numbered list', icon: '1.', run: (t, s, e) => prefixLines(t, s, e, '1. ') },
-  { label: 'Checklist', icon: '☑', run: (t, s, e) => prefixLines(t, s, e, '- [ ] ') },
+  { label: 'format.bold', icon: 'B', className: 'bold', run: (t, s, e) => wrapSelection(t, s, e, '**') },
+  { label: 'format.italic', icon: 'I', className: 'italic', run: (t, s, e) => wrapSelection(t, s, e, '*') },
+  { label: 'format.heading', icon: 'H', run: (t, s, e) => prefixLines(t, s, e, '# ') },
+  { label: 'format.bullets', icon: '•', run: (t, s, e) => prefixLines(t, s, e, '- ') },
+  { label: 'format.numbers', icon: '1.', run: (t, s, e) => prefixLines(t, s, e, '1. ') },
+  { label: 'format.checklist', icon: '☑', run: (t, s, e) => prefixLines(t, s, e, '- [ ] ') },
 ];
 
 // Formatting buttons for the entry textarea (they insert the light
 // Markdown that richText.js renders) and a template picker.
 export function FormatToolbar({ textareaId, content, onChange }) {
+  const { t, language } = useI18n();
+  const templates = templatesFor(language);
+
   function apply(action) {
     const textarea = document.getElementById(textareaId);
     const start = textarea?.selectionStart ?? content.length;
@@ -29,7 +33,7 @@ export function FormatToolbar({ textareaId, content, onChange }) {
   }
 
   function handleTemplate(e) {
-    const template = TEMPLATES.find((t) => t.id === e.target.value);
+    const template = templates.find((item) => item.id === e.target.value);
     e.target.value = '';
     if (!template) return;
     const next = applyTemplate(content, template);
@@ -39,26 +43,26 @@ export function FormatToolbar({ textareaId, content, onChange }) {
   }
 
   return (
-    <div className={styles.toolbar} role="toolbar" aria-label="Formatting">
+    <div className={styles.toolbar} role="toolbar" aria-label={t('format.label')}>
       {ACTIONS.map((action) => (
         <button
           key={action.label}
           type="button"
           className={`${styles.button} ${action.className ? styles[action.className] : ''}`}
           onClick={() => apply(action)}
-          aria-label={action.label}
-          title={action.label}
+          aria-label={t(action.label)}
+          title={t(action.label)}
         >
           <span aria-hidden="true">{action.icon}</span>
         </button>
       ))}
-      <select className={styles.templates} aria-label="Use a template" defaultValue="" onChange={handleTemplate}>
+      <select className={styles.templates} aria-label={t('format.template')} defaultValue="" onChange={handleTemplate}>
         <option value="" disabled>
-          Templates…
+          {t('format.templates')}
         </option>
-        {TEMPLATES.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.emoji} {t.name}
+        {templates.map((template) => (
+          <option key={template.id} value={template.id}>
+            {template.emoji} {template.name}
           </option>
         ))}
       </select>

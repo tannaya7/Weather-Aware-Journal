@@ -12,12 +12,21 @@ The app is designed writing-first: the only thing an entry ever requires is some
 - **Edit** and delete entries, with a 5-second undo toast that works from any page
 - A **timeline** grouped by month, not a static grid — click an entry's opening line to read it in full
 - Real-time weather lookup for any city via the free [Open-Meteo](https://open-meteo.com/) API — no API key needed
-- Entries persist locally via `localStorage`
+- Entries are stored in the browser's IndexedDB on your device (with an optional passcode lock that encrypts them)
 - Search, sort (newest/oldest), filter to today, and paginate
 - Mood tracker with an accessible emoji + bar-chart summary
 - Per-entry background theme and font customization
 - App-wide light/dark ("paper" / "candlelit") theme toggle, independent of per-entry appearance
 - **Export/Import**: back up all entries to a JSON file and restore them later
+
+
+### Beyond the basics
+- **Privacy:** optional passcode lock (and fingerprint/face unlock with passkeys), encrypted backups, optional end-to-end encrypted sync.
+- **Insights:** mood and weather patterns, a year calendar, a map of your entries, weekly goals, habits, and period reviews.
+- **Search by meaning:** optional, runs on your device.
+- **Optional Gemini helpers** (need the optional server): organize an entry (summary, tags, mood), plan a day from the forecast, get a writing prompt, and review a period. Every one starts only when you press its button and says what it sends first. See [worker/GEMINI.md](worker/GEMINI.md).
+- **Languages:** English, Spanish and Hindi.
+- **Optional server** (`worker/`): sync, daily reminders and the Gemini helpers. See [worker/README.md](worker/README.md).
 
 ### Platform
 - **Installable PWA** — add to home screen, works offline for the app shell; the last-fetched weather is cached too
@@ -31,6 +40,10 @@ The app is designed writing-first: the only thing an entry ever requires is some
 - Respects `prefers-reduced-motion`
 
 ## 🚀 Getting Started
+
+**Just want to use it, with the optional server and AI helpers, on your own computer?** Put your Gemini key in `gemini.env` in your home folder (one line: `GEMINI_API_KEY=...`), then run `npm install`, `npm install --prefix worker` and `npm run local`. Nothing is deployed. Details in [worker/GEMINI.md](worker/GEMINI.md).
+
+To run only the app (no server, no AI helpers):
 
 ```bash
 npm install
@@ -82,14 +95,13 @@ The manifest icons are hand-authored SVGs (works for "Add to Home Screen" on Chr
 
 ## 🗄️ Data
 
-All entries are stored in `localStorage` under the key `weatherJournalEntries` — unchanged since the very first version of this app, so upgrading never loses existing entries. Clearing browser data will delete them; use **Export** on the dashboard to back them up first.
+Entries are stored in IndexedDB (database `weatherJournal`). Entries saved by older versions in `localStorage` (`weatherJournalEntries`) are moved over automatically on first load. Clearing browser data deletes them, so use **Export** (or an encrypted backup) to keep a copy. See [SECURITY.md](SECURITY.md) and [AUDIT.md](AUDIT.md) for how data is protected and what leaves the device.
 
 ## 📝 Possible future enhancements
 
 - Real PNG/maskable app icons for iOS home-screen support
-- Cloud sync with user accounts
-- Photo attachments
-- Weather forecast (not just current conditions) for future-dated entries
+- Finish the Spanish and Hindi translations (most text is translated; some screens are not yet)
+- Accounts are deliberately not planned: sync uses a private sync code instead
 
 ## 📄 License
 

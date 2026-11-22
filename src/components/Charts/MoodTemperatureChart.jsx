@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useChartWidth } from './useChartWidth.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './Charts.module.css';
 
 const ROW_H = 36;
@@ -14,6 +15,7 @@ function niceStep(span) {
 // with its value, so nothing is hidden behind hover; hovering a row lifts
 // its dot.
 export function MoodTemperatureChart({ data }) {
+  const { t, tOr } = useI18n();
   const [ref, width] = useChartWidth();
   const [active, setActive] = useState(null);
 
@@ -22,7 +24,7 @@ export function MoodTemperatureChart({ data }) {
   const lo = Math.floor((Math.min(...temps) - 1) / step) * step;
   const hi = Math.ceil((Math.max(...temps) + 1) / step) * step;
   const ticks = [];
-  for (let t = lo; t <= hi; t += step) ticks.push(t);
+  for (let tick = lo; tick <= hi; tick += step) ticks.push(tick);
 
   const plotW = Math.max(width - M.left - M.right, 10);
   const height = M.top + data.length * ROW_H + M.bottom;
@@ -32,11 +34,11 @@ export function MoodTemperatureChart({ data }) {
   return (
     <div className={styles.chartWrap} ref={ref}>
       <svg width={width} height={height} className={styles.svg} aria-hidden="true">
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={x(t)} x2={x(t)} y1={M.top} y2={height - M.bottom} className={styles.grid} />
-            <text x={x(t)} y={height - 8} className={styles.axisLabel} textAnchor="middle">
-              {t}°
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line x1={x(tick)} x2={x(tick)} y1={M.top} y2={height - M.bottom} className={styles.grid} />
+            <text x={x(tick)} y={height - 8} className={styles.axisLabel} textAnchor="middle">
+              {tick}°
             </text>
           </g>
         ))}
@@ -65,13 +67,11 @@ export function MoodTemperatureChart({ data }) {
             onPointerLeave={() => setActive(null)}
           >
             <span className={styles.rowLabel} style={{ width: M.left - 12 }}>
-              <span aria-hidden="true">{d.emoji}</span> {d.mood}
+              <span aria-hidden="true">{d.emoji}</span> {tOr(`mood.${d.mood}`, d.mood)}
             </span>
             <span className={styles.rowValue} style={{ width: M.right - 12 }}>
               <strong>{Math.round(d.averageTemp)}°C</strong>{' '}
-              <span>
-                · {d.count} {d.count === 1 ? 'day' : 'days'}
-              </span>
+              <span>· {t('chart.days', { count: d.count })}</span>
             </span>
           </li>
         ))}

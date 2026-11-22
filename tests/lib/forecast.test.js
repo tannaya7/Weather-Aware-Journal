@@ -108,7 +108,10 @@ describe('forecastHeadsUp', () => {
     expect(forecastHeadsUp([today, day({ code: 65, weatherType: 'Rain', precipitation: 14 })], [], NOW).kind).toBe('heavy-rain');
     const rainToday = day({ date: '2026-10-12', code: 61, weatherType: 'Rain', max: 15 });
     expect(forecastHeadsUp([rainToday, day({ code: 0, weatherType: 'Clear sky', max: 16 })], [], NOW).kind).toBe('sun-returns');
-    expect(forecastHeadsUp([today, day({ max: 24 })], [], NOW).kind).toBe('swing');
+    const swing = forecastHeadsUp([today, day({ max: 24 })], [], NOW);
+    expect(swing.kind).toBe('swing-warmer');
+    expect(swing.values.degrees).toBe(9);
+    expect(forecastHeadsUp([day({ date: '2026-10-12', max: 24 }), day({ max: 15 })], [], NOW).kind).toBe('swing-colder');
   });
 
   it('falls back to a plain summary with a prompt', () => {

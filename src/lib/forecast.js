@@ -104,6 +104,7 @@ export function forecastHeadsUp(days, entries = [], now = new Date()) {
     return {
       ...base,
       kind: 'heat',
+      values: { max: tomorrow.max },
       headline: `Tomorrow gets hot: ${tomorrow.max}°C.`,
       prompt: 'A hot day ahead. How does heat change your energy and your plans?',
     };
@@ -112,6 +113,7 @@ export function forecastHeadsUp(days, entries = [], now = new Date()) {
     return {
       ...base,
       kind: 'cold',
+      values: { max: tomorrow.max },
       headline: `Tomorrow turns cold: ${tomorrow.max}°C at best.`,
       prompt: 'A cold day ahead. What will keep you warm, inside and out?',
     };
@@ -120,6 +122,7 @@ export function forecastHeadsUp(days, entries = [], now = new Date()) {
     return {
       ...base,
       kind: 'heavy-rain',
+      values: { mm: Math.round(tomorrow.precipitation) },
       headline: `Heavy rain is forecast for tomorrow (${Math.round(tomorrow.precipitation)} mm).`,
       prompt: 'A very wet day is coming. What would make a rainy day feel good?',
     };
@@ -135,7 +138,8 @@ export function forecastHeadsUp(days, entries = [], now = new Date()) {
   if (Math.abs(swing) >= 8) {
     return {
       ...base,
-      kind: 'swing',
+      kind: swing > 0 ? 'swing-warmer' : 'swing-colder',
+      values: { degrees: Math.abs(swing) },
       headline: `Tomorrow is ${Math.abs(swing)}°C ${swing > 0 ? 'warmer' : 'colder'} than today.`,
       prompt: 'The weather shifts tomorrow. How do sudden changes land for you?',
     };
@@ -143,6 +147,7 @@ export function forecastHeadsUp(days, entries = [], now = new Date()) {
   return {
     ...base,
     kind: 'ordinary',
+    values: { min: tomorrow.min, max: tomorrow.max },
     headline: `Tomorrow: ${tomorrow.weatherType.toLowerCase()}, ${tomorrow.min}° to ${tomorrow.max}°C.`,
     prompt: 'What would make tomorrow a good day, whatever the weather does?',
   };

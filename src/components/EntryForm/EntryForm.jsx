@@ -80,6 +80,10 @@ export function EntryForm({
   draft,
   onDraftChange,
   onDiscardDraft,
+  // Optional: (({ weatherType, onUse }) => element) shown under the usual
+  // writing prompt, for a new entry only. The page supplies it, so the form
+  // itself needs nothing beyond its own props.
+  promptHelper,
   habits = [],
 }) {
   const isEdit = mode === 'edit';
@@ -241,6 +245,7 @@ export function EntryForm({
         </div>
       )}
       {!isEdit && <WritingPrompt weatherType={weather?.weatherType} onUse={handleUsePrompt} />}
+      {!isEdit && promptHelper?.({ weatherType: weather?.weatherType, onUse: handleUsePrompt })}
       <DictationButton onText={handleDictatedText} />
       <FormatToolbar
         textareaId="contentInput"

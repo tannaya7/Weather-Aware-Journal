@@ -4,6 +4,12 @@ dist-ssr
 .vite
 *.local
 
+# Secrets: local API keys and Wrangler's local secrets file. Never commit these.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+
 .vscode/*
 !.vscode/extensions.json
 

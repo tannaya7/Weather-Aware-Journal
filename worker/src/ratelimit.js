@@ -51,4 +51,5 @@ export const LIMITS = {
   failedAuth: { limit: 20, windowSeconds: 600 }, // per IP
   newJournal: { limit: 5, windowSeconds: 3600 }, // per IP
   reflectBurst: { limit: 5, windowSeconds: 60 }, // per journal
+  aiBurst: { limit: 6, windowSeconds: 60 }, // per journal, for the Gemini helpers
 };

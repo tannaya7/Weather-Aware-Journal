@@ -4,6 +4,7 @@ import { useEntriesContext } from '../../context/EntriesContext.jsx';
 import { requestReflection } from '../../lib/syncClient.js';
 import { stripMarkdown } from '../../lib/richText.js';
 import { allHabits } from '../../lib/habits.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './Reflection.module.css';
 
 const WEEK_MS = 7 * 86400000;
@@ -32,19 +33,18 @@ function recentEntries(entries, now = Date.now()) {
 // Off until the person opts in, which spells out what leaves the device.
 export function Reflection({ scope, entry }) {
   const { entries, sync, settings, setSetting, habitConfig } = useEntriesContext();
+  const { t, language } = useI18n();
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const optedIn = Boolean(settings.ai?.enabled);
 
   const chosen = scope === 'entry' ? [entry] : recentEntries(entries);
-  const label = scope === 'entry' ? 'Reflect on this entry' : 'Reflect on the past 7 days';
+  const label = t(scope === 'entry' ? 'reflect.entry' : 'reflect.week');
 
   if (!sync.enabled) {
     return (
-      <p className={styles.text}>
-        AI reflections run on the sync server. Turn on sync in Settings to use them.
-      </p>
+      <p className={styles.text}>{t('reflect.needSync')}</p>
     );
   }
 
@@ -52,13 +52,10 @@ export function Reflection({ scope, entry }) {
     return (
       <div className={styles.optIn}>
         <p className={styles.text}>
-          Get a short, private reflection on your entries from Claude (an AI by Anthropic). When you
-          ask for one, the <strong>text, date, mood, weather, and habits</strong> of those entries are
-          sent to the AI. Photos, voice memos, places, and tags never are. Nothing is sent until you
-          press the button.
+          {t('reflect.optInBefore')} <strong>{t('reflect.optInFields')}</strong> {t('reflect.optInAfter')}
         </p>
         <Button type="button" variant="secondary" small onClick={() => setSetting('ai', { enabled: true })}>
-          Turn on AI reflections
+          {t('reflect.turnOn')}
         </Button>
       </div>
     );
@@ -71,6 +68,7 @@ export function Reflection({ scope, entry }) {
       const habits = allHabits(habitConfig);
       const reply = await requestReflection(sync.code, {
         scope,
+        language,
         entries: chosen.map((e) => toReflectionEntry(e, habits)),
       });
       setResult(reply);
@@ -84,11 +82,11 @@ export function Reflection({ scope, entry }) {
     <div className={styles.reflection}>
       <div className={styles.actions}>
         <Button type="button" small disabled={busy || chosen.length === 0} onClick={handleReflect}>
-          {busy ? 'Thinking…' : `✨ ${label}`}
+          {busy ? t('reflect.thinking') : `✨ ${label}`}
         </Button>
-        {chosen.length === 0 && <span className={styles.text}>No entries in the past 7 days yet.</span>}
+        {chosen.length === 0 && <span className={styles.text}>{t('reflect.noEntries')}</span>}
         <button type="button" className={styles.link} onClick={() => setSetting('ai', { enabled: false })}>
-          Turn off AI reflections
+          {t('reflect.turnOff')}
         </button>
       </div>
       {error && (
@@ -100,8 +98,8 @@ export function Reflection({ scope, entry }) {
         <figure className={styles.result}>
           <blockquote className={styles.quote}>{result.text}</blockquote>
           <figcaption className={styles.caption}>
-            By Claude · AI can be wrong; this isn&apos;t professional advice
-            {typeof result.remainingToday === 'number' ? ` · ${result.remainingToday} left today` : ''}
+            {t('reflect.caption')}
+            {typeof result.remainingToday === 'number' ? t('reflect.left', { count: result.remainingToday }) : ''}
           </figcaption>
         </figure>
       )}

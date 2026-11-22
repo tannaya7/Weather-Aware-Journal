@@ -7,6 +7,7 @@ import { MoodTemperatureChart } from '../components/Charts/MoodTemperatureChart.
 import { MoodDotRows } from '../components/Charts/MoodDotRows.jsx';
 import { OnThisDay } from '../components/OnThisDay/OnThisDay.jsx';
 import { Reflection } from '../components/Reflection/Reflection.jsx';
+import { PeriodReviewAi } from '../components/GeminiHelpers/PeriodReviewAi.jsx';
 import { Patterns } from '../components/Patterns/Patterns.jsx';
 import { GoalsProgress } from '../components/GoalsProgress/GoalsProgress.jsx';
 import { MoodOutlook } from '../components/MoodOutlook/MoodOutlook.jsx';
@@ -108,6 +109,10 @@ export function Insights() {
               <p className={styles.sub}>A short reflection on your week, written by AI</p>
               <Reflection scope="week" />
             </section>
+
+            <div className={styles.card}>
+              <PeriodReviewAi />
+            </div>
 
             <GoalsProgress entries={entries} habits={habits} goals={habitConfig.goals} />
 

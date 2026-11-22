@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../components/Header/Header.jsx';
 import { useI18n } from '../i18n/I18nContext.jsx';
@@ -8,6 +8,16 @@ import { Button } from '../components/Button/Button.jsx';
 import { useEntriesContext } from '../context/EntriesContext.jsx';
 import { enabledHabits } from '../lib/habits.js';
 import styles from './EntryFormPage.module.css';
+
+// The optional Gemini writing prompt loads only when this page opens.
+const WritingPromptAi = lazy(() => import('../components/GeminiHelpers/WritingPromptAi.jsx').then((m) => ({ default: m.WritingPromptAi })));
+
+// What EntryForm shows under its usual writing prompt, for a new entry.
+const promptHelper = ({ weatherType, onUse }) => (
+  <Suspense fallback={null}>
+    <WritingPromptAi weatherType={weatherType} onUse={onUse} />
+  </Suspense>
+);
 
 export function EntryFormPage() {
   const { t } = useI18n();
@@ -113,6 +123,7 @@ export function EntryFormPage() {
             onDiscardDraft={handleDiscardDraft}
             onSubmit={handleSubmit}
             habits={habits}
+            promptHelper={promptHelper}
           />
         )}
       </div>

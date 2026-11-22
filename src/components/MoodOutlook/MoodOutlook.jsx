@@ -1,14 +1,9 @@
 import { useMemo } from 'react';
 import { describeMood } from '../../lib/insights.js';
 import { moodOutlook } from '../../lib/moodOutlook.js';
+import { weekdayNameLong } from '../../lib/dateFormat.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './MoodOutlook.module.css';
-
-const TREND_TEXT = {
-  rising: 'Your mood has been rising over the last four weeks.',
-  falling: 'Your mood has been sliding over the last four weeks.',
-  steady: 'Your mood has been steady over the last four weeks (no clear rise or fall).',
-  unknown: 'Not enough recent entries with a mood to see a direction yet.',
-};
 
 function barPercent(average) {
   return Math.round(((average + 2) / 4) * 100); // scores run from -2 to +2
@@ -17,54 +12,50 @@ function barPercent(average) {
 // Direction of mood and the weekday rhythm, with a "tomorrow" tendency only
 // when it beats just using your overall average.
 export function MoodOutlook({ entries, today }) {
+  const { t, tOr, language } = useI18n();
   const outlook = useMemo(() => moodOutlook(entries, today), [entries, today]);
+  const moodWord = (average) => tOr(`moodScore.${describeMood(average)}`, describeMood(average));
+  const dayName = (index) => weekdayNameLong(index, language);
 
   return (
     <section className={styles.card} aria-labelledby="outlook-heading">
       <h2 id="outlook-heading" className={styles.heading}>
-        Mood outlook
+        {t('outlook.heading')}
       </h2>
       {!outlook.enough ? (
-        <p className={styles.empty}>
-          Log a mood on at least {outlook.needed} different days to see your trend and weekday
-          rhythm. You have {outlook.moodDays}.
-        </p>
+        <p className={styles.empty}>{t('outlook.notEnough', { needed: outlook.needed, have: outlook.moodDays })}</p>
       ) : (
         <>
-          <p className={styles.trend}>{TREND_TEXT[outlook.trend.direction]}</p>
+          <p className={styles.trend}>{t(`outlook.${outlook.trend.direction}`)}</p>
 
           {outlook.tomorrow ? (
             <p className={styles.tomorrow}>
-              <strong>Tomorrow ({outlook.tomorrow.weekday})</strong> tends to be{' '}
-              <strong>{outlook.tomorrow.label.toLowerCase()}</strong> for you, going by{' '}
-              {outlook.tomorrow.basedOn} past {outlook.tomorrow.weekday}s. A tendency, not a
-              prediction.
+              <strong>{t('outlook.tomorrow', { weekday: dayName(outlook.tomorrow.index) })}</strong>{' '}
+              {t('outlook.tendsTo')} <strong>{moodWord(outlook.tomorrow.expected).toLowerCase()}</strong>{' '}
+              {t('outlook.basedOn', { count: outlook.tomorrow.basedOn, weekday: dayName(outlook.tomorrow.index) })}
             </p>
           ) : (
-            <p className={styles.sub}>
-              Your weekdays do not differ enough to predict one day from another. Using your overall
-              average does just as well.
-            </p>
+            <p className={styles.sub}>{t('outlook.noPattern')}</p>
           )}
 
-          <h3 className={styles.sectionHeading}>By weekday</h3>
+          <h3 className={styles.sectionHeading}>{t('outlook.byWeekday')}</h3>
           <ul className={styles.days}>
             {outlook.weekdays.map((w) => (
               <li key={w.weekday} className={styles.day}>
-                <span className={styles.dayName}>{w.weekday}</span>
+                <span className={styles.dayName}>{dayName(w.index)}</span>
                 {w.average === null ? (
-                  <span className={styles.dayNone}>No entries</span>
+                  <span className={styles.dayNone}>{moodWord(null)}</span>
                 ) : (
                   <>
                     <span
                       className={styles.track}
                       role="img"
-                      aria-label={`${describeMood(w.average)}, ${w.days} ${w.days === 1 ? 'day' : 'days'}`}
+                      aria-label={t('outlook.dayBar', { label: moodWord(w.average), count: w.days })}
                     >
                       <span className={styles.fill} style={{ width: `${barPercent(w.average)}%` }} />
                     </span>
                     <span className={styles.dayValue}>
-                      {describeMood(w.average)} <span className={styles.count}>({w.days})</span>
+                      {moodWord(w.average)} <span className={styles.count}>({w.days})</span>
                     </span>
                   </>
                 )}

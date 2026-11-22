@@ -2,27 +2,27 @@ import { Link } from 'react-router-dom';
 import { onThisDay } from '../../lib/insights.js';
 import { getEntryTitle } from '../../lib/entryTitle.js';
 import { emojiForMood } from '../../lib/moods.js';
+import { useI18n } from '../../i18n/I18nContext.jsx';
 import styles from './OnThisDay.module.css';
 
 const MAX_SHOWN = 3;
 
 // "What were you doing a year ago today?" Hidden unless there's a match.
 export function OnThisDay({ entries, today = new Date() }) {
+  const { t } = useI18n();
   const memories = onThisDay(entries, today);
   if (memories.length === 0) return null;
 
   return (
     <section className={styles.card} aria-labelledby="on-this-day-heading">
       <h2 id="on-this-day-heading" className={styles.heading}>
-        <span aria-hidden="true">🕰️</span> On this day
+        <span aria-hidden="true">🕰️</span> {t('onThisDay.heading')}
       </h2>
       <ul className={styles.list}>
         {memories.slice(0, MAX_SHOWN).map(({ entry, yearsAgo }) => (
           <li key={entry.id}>
             <Link to={`/entry/${entry.id}`} className={styles.link}>
-              <span className={styles.when}>
-                {yearsAgo === 1 ? '1 year ago' : `${yearsAgo} years ago`}
-              </span>
+              <span className={styles.when}>{t('onThisDay.yearsAgo', { count: yearsAgo })}</span>
               <span className={styles.title}>
                 {entry.mood && <span aria-hidden="true">{emojiForMood(entry.mood)} </span>}
                 {getEntryTitle(entry)}
@@ -37,7 +37,7 @@ export function OnThisDay({ entries, today = new Date() }) {
         ))}
       </ul>
       {memories.length > MAX_SHOWN && (
-        <p className={styles.more}>and {memories.length - MAX_SHOWN} more from this day</p>
+        <p className={styles.more}>{t('onThisDay.more', { count: memories.length - MAX_SHOWN })}</p>
       )}
     </section>
   );

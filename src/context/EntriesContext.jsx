@@ -4,6 +4,7 @@ import { useSync } from '../hooks/useSync.js';
 import { useAnnouncer } from './AnnouncerContext.jsx';
 import { getEntryTitle } from '../lib/entryTitle.js';
 import { LockScreen } from '../components/LockScreen/LockScreen.jsx';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 const EntriesContext = createContext(null);
 
@@ -30,6 +31,7 @@ export function EntriesProvider({ children }) {
   const base = useEntries();
   const sync = useSync(base, base.status === 'ready');
   const { announce } = useAnnouncer();
+  const { t } = useI18n();
   const [pendingUndo, setPendingUndo] = useState(null);
   const { status, lockEnabled, lock } = base;
 
@@ -37,10 +39,10 @@ export function EntriesProvider({ children }) {
     async (id) => {
       const removed = await base.deleteEntry(id);
       setPendingUndo(removed);
-      announce(`Entry "${getEntryTitle(removed)}" deleted. Undo available.`, 'assertive');
+      announce(t('journal.deleted', { title: getEntryTitle(removed) }), 'assertive');
       return removed;
     },
-    [base, announce],
+    [base, announce, t],
   );
 
   const undoDelete = useCallback(async () => {
@@ -48,8 +50,8 @@ export function EntriesProvider({ children }) {
     const entry = pendingUndo;
     setPendingUndo(null);
     await base.restoreEntry(entry);
-    announce(`Entry "${getEntryTitle(entry)}" restored.`);
-  }, [base, announce, pendingUndo]);
+    announce(t('journal.restored', { title: getEntryTitle(entry) }));
+  }, [base, announce, pendingUndo, t]);
 
   const dismissUndo = useCallback(() => setPendingUndo(null), []);
 
@@ -75,9 +77,9 @@ export function EntriesProvider({ children }) {
 
   if (status === 'loading') {
     return (
-      <StatusScreen title="Opening your journal…">
+      <StatusScreen title={t('journal.opening')}>
         <p className="sr-only" role="status">
-          Loading
+          {t('journal.loading')}
         </p>
       </StatusScreen>
     );
@@ -85,11 +87,8 @@ export function EntriesProvider({ children }) {
 
   if (status === 'error') {
     return (
-      <StatusScreen title="Your journal couldn't be opened">
-        <p>
-          This browser blocked access to its storage. That can happen in private browsing, or
-          when site data is turned off. Try a normal window, or allow site data for this page.
-        </p>
+      <StatusScreen title={t('journal.blockedTitle')}>
+        <p>{t('journal.blockedText')}</p>
       </StatusScreen>
     );
   }

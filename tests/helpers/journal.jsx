@@ -6,14 +6,21 @@ import { AnnouncerProvider } from '../../src/context/AnnouncerContext.jsx';
 import { EntriesProvider } from '../../src/context/EntriesContext.jsx';
 import { SemanticProvider } from '../../src/context/SemanticContext.jsx';
 import { saveEntries } from '../../src/lib/storage.js';
+import { MESSAGES } from '../../src/i18n/messages.js';
 
 // Puts entries straight into the (fake) IndexedDB before the app loads.
 export function seedEntries(entries) {
   return saveEntries(entries, []);
 }
 
+// The "opening" text is in the app's language, so wait for it to be gone in
+// every language (a Hindi or Spanish test would otherwise not wait at all).
+const OPENING_TEXTS = Object.values(MESSAGES).map((messages) => messages['journal.opening']);
+
 export async function waitForJournal() {
-  await waitFor(() => expect(screen.queryByText('Opening your journal…')).not.toBeInTheDocument());
+  await waitFor(() => {
+    for (const text of OPENING_TEXTS) expect(screen.queryByText(text)).not.toBeInTheDocument();
+  });
 }
 
 // Renders `ui` inside the app's providers and a router, and waits until the
